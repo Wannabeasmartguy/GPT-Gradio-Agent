@@ -1,6 +1,9 @@
 # GPT-Gradio-Agent
 Build your own GPT Agent with  Azure OpenAI API and Gradio. 
 
+![image](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/39fa93fa-5542-4dd7-9627-41672a269261)
+
+
 ## Get Started
 1. Get [Azure OpenAI API Key](https://portal.azure.com/#home);
 2. Change the environment variable: `AZURE_OAI_MODEL`, `AZURE_OAI_KEY` and `AZURE_OAI_ENDPOINT`;
