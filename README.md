@@ -15,9 +15,9 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 
 - [x] Support for context quantity control
 
-- [ ] Detailed configuration of additional parameters
+- [x] Stream response
 
-- [ ] Stream response
+- [ ] Detailed configuration of additional parameters
 
 - [ ] Local storage of data
 
@@ -39,9 +39,9 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 
 - [x] 添加上下文
 
-- [ ] 详细的参数配置
+- [x] 流式输出
 
-- [ ] 流响应
+- [ ] 详细的参数配置
 
 - [ ] 数据本地存储
 
