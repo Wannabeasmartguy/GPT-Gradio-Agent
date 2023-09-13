@@ -1,5 +1,3 @@
-import os
-#from dotenv import load_dotenv
 import gradio as gr
 import openai
 import time
@@ -51,7 +49,7 @@ def deliver(message, history,system,context_length:int, temperature,):
         stop=None
     )
     reply = response.choices[0].message.content
-    
+        
     # GPT reply
     chat_input = {
         "role": "assistant",
@@ -63,12 +61,14 @@ def deliver(message, history,system,context_length:int, temperature,):
     if len(chat_history) > context_length:
         chat_history = [chat_history[0]]+chat_history[1-context_length:]
     
-    #Then return reply
-    return reply
-
-def rst_memery():
-    chat_history = []
-    return chat_history
+    # Then return reply
+    # Gradio's streaming output requires an explicit loop
+    result = []
+    for char in reply:
+        result.append(char)
+        str_result = ''.join(result)
+        time.sleep(0.02)
+        yield str_result
 
 with gr.Blocks() as demo:
     gr.Markdown(
