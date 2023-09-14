@@ -7,6 +7,9 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 ## Get Started
 1. Get [Azure OpenAI API Key](https://portal.azure.com/#home);
 2. Change the environment variable: `AZURE_OAI_MODEL`, `AZURE_OAI_KEY` and `AZURE_OAI_ENDPOINT`;
+> `AZURE_OAI_MODEL`： deployed model's name, not the **model type**;
+> `AZURE_OAI_KEY`：Azure OpenAI key;
+> `AZURE_OAI_ENDPOINT`：Access key provided by Azure OpenAI. 
 3. Enjoy it!
 
 ## Todo List
@@ -19,6 +22,8 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 
 - [ ] Detailed configuration of additional parameters
 
+- [ ] Dhat with documents
+
 - [ ] Local storage of data
 
 - [ ] Import and export chat history
@@ -28,9 +33,12 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 # GPT-Gradio-Agent
 使用 Azure OpenAI 和 Gradio 创建自己的 GPT 智能助手
 
-## Get Started
+## 快速开始
 1. 获取[Azure OpenAI API Key](https://portal.azure.com/#home);
 2. 修改环境变量`AZURE_OAI_MODEL`、`AZURE_OAI_KEY`和`AZURE_OAI_ENDPOINT`;
+> `AZURE_OAI_MODEL`：模型名称，写的是你自己**部署的模型名称**；
+> `AZURE_OAI_KEY`：Azure OpenAI 的 key；
+> `AZURE_OAI_ENDPOINT`：Azure OpenAI 的提供的“终结点”
 3. 尽情享受吧！
 
 ## 开发计划
@@ -42,6 +50,8 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 - [x] 流式输出
 
 - [ ] 详细的参数配置
+
+- [ ] 支持与文件对话
 
 - [ ] 数据本地存储
 
