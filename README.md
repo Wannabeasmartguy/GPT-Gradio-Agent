@@ -1,6 +1,8 @@
 # GPT-Gradio-Agent
 Build your own GPT Agent with  Azure OpenAI API and Gradio. 
 
+> If you like this project, please star for it, this is the greatest encouragement to me!
+
 ![image](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/8f7fb633-8a02-455c-be92-d303e68320e2)
 
 
@@ -35,6 +37,7 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 
 # GPT-Gradio-Agent
 使用 Azure OpenAI 和 Gradio 创建自己的 GPT 智能助手
+> 如果你喜欢这个项目，请你为它点上 star，这是对我最大的鼓励！
 
 ## 快速开始
 1. 获取[Azure OpenAI API Key](https://portal.azure.com/#home);
