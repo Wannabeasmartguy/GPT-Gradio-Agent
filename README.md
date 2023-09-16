@@ -23,6 +23,8 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 
 - [x] Detailed configuration of additional parameters
 
+- [ ] Choose models
+
 - [ ] Dhat with documents
 
 - [ ] Local storage of data
@@ -52,6 +54,8 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 - [x] 流式输出
 
 - [x] 详细的参数配置
+
+- [ ] 模型选择
 
 - [ ] 支持与文件对话
 
