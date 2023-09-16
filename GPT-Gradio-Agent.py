@@ -45,16 +45,29 @@ def deliver(message:str,
 
     chat_history.append(user_input)
 
-    response = openai.ChatCompletion.create(
-        engine=AZURE_OAI_MODEL,
-        messages=chat_history,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        top_p=top_p,
-        frequency_penalty=frequency_penalty,
-        presence_penalty=presence_penalty,
-        stop=None
-    )
+    if context_length == 0:
+        # If context_length == 0,clean up chat_history
+        response = openai.ChatCompletion.create(
+            engine=AZURE_OAI_MODEL,
+            messages=[system_input,user_input],
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stop=None
+        )
+    else:
+        response = openai.ChatCompletion.create(
+            engine=AZURE_OAI_MODEL,
+            messages=chat_history,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stop=None
+        )
     reply = response.choices[0].message.content
         
     # GPT reply
@@ -66,9 +79,9 @@ def deliver(message:str,
     chat_history_list.append([message,None])
 
     # Trim the context length first
-    if len(chat_history) > context_length:
-        chat_history = [chat_history[0]]+chat_history[1-context_length:]
-
+    if (len(chat_history)-1 > context_length) and len(chat_history)>3:
+        chat_history = [chat_history[0]]+chat_history[-context_length:]
+    
     return chat_history_list,message,chat_history
 
 def stream(history_list:list,chat_history:list[dict]):
@@ -76,7 +89,7 @@ def stream(history_list:list,chat_history:list[dict]):
     history_list[-1][1] = ""
     for character in bot_message:
         history_list[-1][1] += character
-        time.sleep(0.05)
+        time.sleep(0.02)
         yield history_list
 
 with gr.Blocks() as demo:
@@ -130,5 +143,5 @@ with gr.Blocks() as demo:
     message.submit(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
     send.click(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
 
-demo.queue().launch(inbrowser=True,debug=True,auth=[("admin","123456")],
+demo.queue().launch(inbrowser=False,debug=True,auth=[("admin","123456")],
                     auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码")
