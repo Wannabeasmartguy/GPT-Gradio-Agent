@@ -11,6 +11,7 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
   > `AZURE_OAI_KEY`：Azure OpenAI key;  
   > `AZURE_OAI_ENDPOINT`：Access key provided by Azure OpenAI. 
 3. Enjoy it!
+> The default username is 'admin' and the password is '123456', which can be changed by yourself.
 
 ## Todo List
 
@@ -20,7 +21,7 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 
 - [x] Stream response
 
-- [ ] Detailed configuration of additional parameters
+- [x] Detailed configuration of additional parameters
 
 - [ ] Dhat with documents
 
@@ -40,6 +41,7 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
   > `AZURE_OAI_KEY`：Azure OpenAI 的 key；  
   > `AZURE_OAI_ENDPOINT`：Azure OpenAI 的提供的“终结点”  
 3. 尽情享受吧！
+> 默认用户名为`admin`，密码为`123456`，可自行更改。
 
 ## 开发计划
 
@@ -49,7 +51,7 @@ Build your own GPT Agent with  Azure OpenAI API and Gradio.
 
 - [x] 流式输出
 
-- [ ] 详细的参数配置
+- [x] 详细的参数配置
 
 - [ ] 支持与文件对话
 
