@@ -16,7 +16,16 @@ openai.api_key = AZURE_OAI_KEY
 
 #gr.Chatbot.postprocess = format_io
 
-def deliver(message:str,chat_history:list, chat_history_list:list,system:str,context_length:int, temperature:float,):
+def deliver(message:str,
+            chat_history:list, 
+            chat_history_list:list,
+            system:str,
+            context_length:int, 
+            temperature:float,
+            max_tokens:int,
+            top_p:float,
+            frequency_penalty:float,
+            presence_penalty:float):
 
     # System Prompt and User Prompt
     if system:
@@ -40,10 +49,10 @@ def deliver(message:str,chat_history:list, chat_history_list:list,system:str,con
         engine=AZURE_OAI_MODEL,
         messages=chat_history,
         temperature=temperature,
-        max_tokens=400,
-        top_p=0.95,
-        frequency_penalty=0,
-        presence_penalty=0,
+        max_tokens=max_tokens,
+        top_p=top_p,
+        frequency_penalty=frequency_penalty,
+        presence_penalty=presence_penalty,
         stop=None
     )
     reply = response.choices[0].message.content
@@ -54,22 +63,21 @@ def deliver(message:str,chat_history:list, chat_history_list:list,system:str,con
         "content": reply
     }
     chat_history.append(chat_input)
-    chat_history_list.append([message,reply])
+    chat_history_list.append([message,None])
 
     # Trim the context length first
     if len(chat_history) > context_length:
         chat_history = [chat_history[0]]+chat_history[1-context_length:]
-        
-    
-    # Then return reply
-    # Gradio's streaming output requires an explicit loop
-    # result = []
-    # for char in reply:
-    #     result.append(char)
-    #     str_result = ''.join(result)
-    #     time.sleep(0.02)
-    #     yield str_result,message,chat_history
-    return chat_history_list,message,chat_history,chat_history_list
+
+    return chat_history_list,message,chat_history
+
+def stream(history_list:list,chat_history:list[dict]):
+    bot_message = chat_history[-1]['content']
+    history_list[-1][1] = ""
+    for character in bot_message:
+        history_list[-1][1] += character
+        time.sleep(0.05)
+        yield history_list
 
 with gr.Blocks() as demo:
     gr.Markdown(
@@ -78,36 +86,49 @@ with gr.Blocks() as demo:
         <center>Use the agent make your work and life much more efficient.<center>
         '''
     )
+    usr_msg = gr.State()
+    chat_his = gr.State([])
     with gr.Row():
         with gr.Column(scale=1.8):
-            chat_bot = gr.Chatbot()
+            chat_bot = gr.Chatbot(height=500,
+                                  show_copy_button=True,
+                                  bubble_full_width=False)
+            message = gr.Textbox(label="Input your prompt",
+                                        info="'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.")
+            with gr.Row(scale=0.1):
+                clear = gr.ClearButton([message, chat_bot,chat_his],scale=1,size="sm")
+                send = gr.Button("Send",scale=2)
 
         with gr.Column():
-            
-            usr_msg = gr.State()
-            chat_his = gr.State([])
-            chat_his_list = gr.State([])
             with gr.Row():
-                #gr.Button("Send", callback=lambda: gr.set_value(message, gr.get_value(message) + " " + gr.get_value(chat_bot)))
-                with gr.Column(width=20):
+                with gr.Column():
                     with gr.Accordion("Commom Setting"):
-                        System_Prompt = gr.Textbox("You are a helpful AI.", label="System Prompt")
-                        Context_length = gr.Slider(0, 32, value=4, step=1, label="Context length")
+                        System_Prompt = gr.Textbox("You are a helpful AI.", label="System Prompt",
+                                                   info="'Shift + Enter' to begin an new line.")
+                        Context_length = gr.Slider(0, 32, value=4, step=1, label="Context length",
+                                                   info="每次请求携带的历史消息数")                    
         
-                with gr.Accordion("Additional Setting"):
-                    
-                    Temperature = gr.Slider(0, 1, value=0.7, step=0.01, label="Temperature")
-    
-        message = gr.Textbox(label="Input your prompt",
-                             info="'Shift + Enter' to begin an new line.")
-        with gr.Column(scale=0.1):
-            send = gr.Button("Send",)
-            clear = gr.ClearButton([message, chat_bot,chat_his,chat_his_list],scale=1,size="sm")
-    # 将需要输入和输出的所有句柄进行合并
-    input_param = [message, chat_his, chat_his_list, System_Prompt, Context_length, Temperature]
-    output_param = [chat_bot, usr_msg, chat_his, chat_his_list]
+                    with gr.Accordion("Additional Setting"):
+                        max_tokens = gr.Slider(0, 4096, value=400, step=1, label="max_tokens",
+                                               info="携带上下文交互的最大 token 数")
+                        Temperature = gr.Slider(0, 2, value=0.5, step=0.1, label="Temperature",
+                                                info="随机性：值越大，回复越随机")
+                        top_p = gr.Slider(0, 1, value=1, step=0.1, label="top_p",
+                                          info="核采样：与随机性类似，但不要与随机性一起修改")
+                        frequency_penalty = gr.Slider(-2, 2, value=0, step=0.1, label="frequency_penalty",
+                                                      info="频率惩罚度：值越大，越不容易出现重复字词")
+                        presence_penalty = gr.Slider(-2, 2, value=0, step=0.1, label="frequency_penalty",
+                                                      info="话题新鲜度：值越大，越可能扩展到新的话题")
+        
 
-    message.submit(deliver,input_param, output_param)
-    send.click(deliver,input_param, output_param)
+    # Merge all handles that require input and output.
+    input_param = [message, chat_his, chat_bot, System_Prompt, 
+                   Context_length, Temperature,max_tokens,top_p,frequency_penalty,
+                   presence_penalty]
+    output_param = [chat_bot, usr_msg, chat_his]
 
-demo.queue().launch(debug=True)
+    message.submit(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
+    send.click(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
+
+demo.queue().launch(inbrowser=True,debug=True,auth=[("admin","123456")],
+                    auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码")
