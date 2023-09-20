@@ -1,22 +1,21 @@
 import gradio as gr
 import openai
 import time
-#from utils import format_io
+import os
+from dotenv import load_dotenv
+# from utils import *
 
-#load_dotenv()
+load_dotenv()
 
-AZURE_OAI_ENDPOINT = "Your Azure OpenAI endpoint"
-AZURE_OAI_KEY = "Your Azure OpenAI key"
-AZURE_OAI_MODEL = "gpt-35-turbo"
-
-openai.api_type = "azure"                           # only Azure OpenAI needed
-openai.api_base = AZURE_OAI_ENDPOINT                # only Azure OpenAI needed
-openai.api_version = "2023-07-01-preview"
-openai.api_key = AZURE_OAI_KEY
+openai.api_base = os.getenv('AZURE_OAI_ENDPOINT')
+openai.api_key = os.getenv('AZURE_OAI_KEY')
+openai.api_version = os.getenv('API_VERSION')
+openai.api_type = os.getenv('API_TYPE')
 
 #gr.Chatbot.postprocess = format_io
 
 def deliver(message:str,
+            model_choice:str,
             chat_history:list, 
             chat_history_list:list,
             system:str,
@@ -48,7 +47,7 @@ def deliver(message:str,
     if context_length == 0:
         # If context_length == 0,clean up chat_history
         response = openai.ChatCompletion.create(
-            engine=AZURE_OAI_MODEL,
+            engine=model_choice,
             messages=[system_input,user_input],
             temperature=temperature,
             max_tokens=max_tokens,
@@ -59,7 +58,7 @@ def deliver(message:str,
         )
     else:
         response = openai.ChatCompletion.create(
-            engine=AZURE_OAI_MODEL,
+            engine=model_choice,
             messages=chat_history,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -103,6 +102,9 @@ with gr.Blocks() as demo:
     chat_his = gr.State([])
     with gr.Row():
         with gr.Column(scale=1.8):
+            model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4"],
+                                    value="gpt-35-turbo",
+                                    label="Model",info="支持模型选择，立即生效")
             chat_bot = gr.Chatbot(height=500,
                                   show_copy_button=True,
                                   bubble_full_width=False)
@@ -135,7 +137,7 @@ with gr.Blocks() as demo:
         
 
     # Merge all handles that require input and output.
-    input_param = [message, chat_his, chat_bot, System_Prompt, 
+    input_param = [message, model_choice, chat_his, chat_bot, System_Prompt, 
                    Context_length, Temperature,max_tokens,top_p,frequency_penalty,
                    presence_penalty]
     output_param = [chat_bot, usr_msg, chat_his]
