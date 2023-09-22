@@ -1,0 +1,6 @@
+gradio==3.44.4
+langchain==0.0.299
+Markdown==3.4.1
+openai==0.27.10
+pandas==1.5.3
+python-dotenv==1.0.0
