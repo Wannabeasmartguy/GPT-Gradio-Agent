@@ -13,15 +13,11 @@ You can also use "System Prompt" to let it play a role of what you want, and set
 ## Get Started
 0. Use `git clone https://github.com/Wannabeasmartguy/GPT-Gradio-Agent.git` to pull the codes；
 > If you don't have Git installed, you can also just download the `GPT-Gradio-Agent.py` and `.env_example`.
+
 1. Get [Azure OpenAI API Key](https://portal.azure.com/#home);
 2. Rename '.env_example' to '.env'. Change the environment variable: `AZURE_OAI_MODEL`, `AZURE_OAI_KEY` and `AZURE_OAI_ENDPOINT`;  
-  > `AZURE_OAI_MODEL`： deployed model's name, not the **model type**;  
-  > `AZURE_OAI_KEY`：Azure OpenAI key;  
-  > `AZURE_OAI_ENDPOINT`：Access key provided by Azure OpenAI.
-
-> If you want to chat with file,please set **`OPENAI_API_KEY`,`OPENAI_API_BASE`,`OPENAI_API_VERSION` and `OPENAI_API_TYPE`**.
-> Actually, **`AZURE_OAI_KEY` is same with `OPENAI_API_KEY`**.In the same way, **`AZURE_OAI_ENDPOINT` and `OPENAI_API_BASE` are the same**.
-> *This method has to be used at the moment, and it will be optimized later.*
+  > `OPENAI_API_KEY`：Azure OpenAI key;  
+  > `OPENAI_API_BASE`：Access key provided by Azure OpenAI.
 
 3. Enjoy it!
 > The default username is 'admin' and the password is '123456', which can be changed by yourself.
@@ -64,16 +60,12 @@ You can also use "System Prompt" to let it play a role of what you want, and set
 
 ## 快速开始
 0. 使用`git clone https://github.com/Wannabeasmartguy/GPT-Gradio-Agent.git`拉取代码；
-> 如果你没有安装 Git ，也可以只下载`GPT-Gradio-Agent.py`和`.env_example`。 
-1. 获取[Azure OpenAI API Key](https://portal.azure.com/#home);
-2. 将`.env_example`重命名为`.env`，修改环境变量`AZURE_OAI_MODEL`、`AZURE_OAI_KEY`和`AZURE_OAI_ENDPOINT`;
-  > `AZURE_OAI_MODEL`：模型名称，写的是你自己**部署的模型名称**；  
-  > `AZURE_OAI_KEY`：Azure OpenAI 的 key；  
-  > `AZURE_OAI_ENDPOINT`：Azure OpenAI 的提供的“终结点”
+> 如果你没有安装 Git ，也可以只下载`GPT-Gradio-Agent.py`和`.env_example`。
 
-> 如果要与文件对话，请设置 **`OPENAI_API_KEY`、`OPENAI_API_BASE`、`OPENAI_API_VERSION` 和`OPENAI_API_TYPE`**。
-> 实际上，`AZURE_OAI_KEY`与`OPENAI_API_KEY`相同。同样，`AZURE_OAI_ENDPOINT`也与`OPENAI_API_BASE`相同。
-> *目前不得不使用这种方法，后续将会对其进行优化*。
+1. 获取[Azure OpenAI API Key](https://portal.azure.com/#home);
+2. 将`.env_example`重命名为`.env`，修改环境变量`OPENAI_API_KEY`和`OPENAI_API_BASE`;  
+  > `OPENAI_API_KEY`：Azure OpenAI 的 api key；  
+  > `OPENAI_API_BASE`：Azure OpenAI 的提供的“终结点”
 
 3. 尽情享受吧！
 > 默认用户名为`admin`，密码为`123456`，可自行更改。
