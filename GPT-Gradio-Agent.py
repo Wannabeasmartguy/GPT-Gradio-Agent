@@ -16,10 +16,10 @@ from langchain.chains import RetrievalQA
 
 load_dotenv()
 
-openai.api_base = os.getenv('AZURE_OAI_ENDPOINT')
-openai.api_key = os.getenv('AZURE_OAI_KEY')
-openai.api_version = os.getenv('API_VERSION')
-openai.api_type = os.getenv('API_TYPE')
+openai.api_base = os.getenv('OPENAI_API_BASE')
+openai.api_key = os.getenv('OPENAI_API_KEY')
+openai.api_version = os.getenv('OPENAI_API_VERSION')
+openai.api_type = os.getenv('OPENAI_API_TYPE')
 
 # initialize the embedding model setting 
 embedding_model = "text-embedding-ada-002"
