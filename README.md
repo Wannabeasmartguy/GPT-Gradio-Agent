@@ -18,7 +18,7 @@ You can also use "System Prompt" to let it play a role of what you want, and set
 > If you don't have Git installed, you can also just download the `GPT-Gradio-Agent.py` and `.env_example`.
 
 1. Get [Azure OpenAI API Key](https://portal.azure.com/#home);
-2. Rename '.env_example' to '.env'. Change the environment variable:  `OPENAI_API_KEY` and `OPENAI_API_BASE`;  
+2. Rename `.env_example` to `.env`. Change the environment variable:  `OPENAI_API_KEY` and `OPENAI_API_BASE`;  
   > `OPENAI_API_KEY`：Azure OpenAI key;  
   > `OPENAI_API_BASE`：Access key provided by Azure OpenAI.
 
