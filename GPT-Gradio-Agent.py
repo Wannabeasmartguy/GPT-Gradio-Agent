@@ -161,7 +161,12 @@ def file_ask_stream(file_ask_history_list:list[list],file_answer:list):
         time.sleep(0.02)
         yield file_ask_history_list
 
-
+def rst_mem(chat_his:list):
+    '''
+    Reset the chatbot memory(chat_his).
+    '''
+    chat_his = []
+    return chat_his
 
 # <---------- GUI ---------->
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
@@ -220,8 +225,11 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                    presence_penalty]
     output_param = [chat_bot, usr_msg, chat_his]
 
+    # chatbot button event
     message.submit(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
     send.click(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
+    clear.click(rst_mem,inputs=chat_his,outputs=chat_his)
+    # chat_file button event
     chat_with_file.click(upload_file,inputs=[file,chat_bot,message,file_answer],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
 
 demo.queue().launch(inbrowser=False,debug=True,

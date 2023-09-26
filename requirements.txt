@@ -4,3 +4,8 @@ Markdown==3.4.1
 openai==0.27.10
 pandas==1.5.3
 python-dotenv==1.0.0
+chromadb==0.4.11
+chroma-hnswlib==0.7.3
+unstructured==0.10.16
+unstructured-inference==0.5.31
+unstructured.pytesseract==0.3.12
