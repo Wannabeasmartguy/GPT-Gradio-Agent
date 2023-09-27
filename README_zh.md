@@ -13,6 +13,7 @@
 > 如果你没有安装 Git ，也可以只下载`GPT-Gradio-Agent.py`和`.env_example`。
 
 1. 获取[Azure OpenAI API Key](https://portal.azure.com/#home);
+
 2. 将`.env_example`重命名为`.env`，修改环境变量`OPENAI_API_KEY`和`OPENAI_API_BASE`;  
   > `OPENAI_API_KEY`：Azure OpenAI 的 api key；  
   > `OPENAI_API_BASE`：Azure OpenAI 的提供的“终结点”
