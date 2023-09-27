@@ -22,7 +22,8 @@ You can also use "System Prompt" to let it play a role of what you want, and set
   > `OPENAI_API_KEY`：Azure OpenAI key;  
   > `OPENAI_API_BASE`：Access key provided by Azure OpenAI.
 
-3. Enjoy it!
+3. Enjoy it!  
+  Use `python GPT-Gradio-Agent.py` in your terminal to run the codes.You can see the URL in your terminal, and the default local URL is http://127.0.0.1:7860.
 > The default username is 'admin' and the password is '123456', which can be changed by yourself.
 
 ## Todo List
