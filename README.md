@@ -43,6 +43,8 @@ You can also use "System Prompt" to let it play a role of what you want, and set
 
   - [x] Chat with single file
   
+  - [x] Summarize the file 
+  
   - [ ] Chat with multiple files
   
   - [ ] Dialogue files management
