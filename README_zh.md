@@ -17,7 +17,8 @@
   > `OPENAI_API_KEY`：Azure OpenAI 的 api key；  
   > `OPENAI_API_BASE`：Azure OpenAI 的提供的“终结点”
 
-3. 尽情享受吧！
+3. 尽情享受吧！  
+   在终端输入`python GPT-Gradio-Agent.py` 以运行代码。在终端内你可以看到本地 URL，它一般是 http://127.0.0.1:7860。
 > 默认用户名为`admin`，密码为`123456`，可自行更改。
 
 ## 开发计划
