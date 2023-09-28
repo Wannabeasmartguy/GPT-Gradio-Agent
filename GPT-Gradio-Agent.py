@@ -270,6 +270,9 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     message.submit(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
     send.click(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
     clear.click(rst_mem,inputs=chat_his,outputs=chat_his)
+
+    message.submit(lambda: gr.update(value=''), [],[message])
+    send.click(lambda: gr.update(value=''), [],[message])
     
     # chat_file button event
     file.upload(upload_file,inputs=[file],outputs=[split_tmp],show_progress="full")
