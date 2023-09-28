@@ -1,4 +1,4 @@
-# GPT-Gradio-Agent
+# GPT-Gradio-Agent  
 
 [中文文档](README_zh.md)
 
@@ -52,3 +52,5 @@ You can also use "System Prompt" to let it play a role of what you want, and set
 - [ ] Local storage of data
 
 - [ ] Import and export chat history
+
+[![GPT-Gradio-Agent](https://github-readme-stats-wannabeasmartguy.vercel.app/api?username=Wannabeasmartguy&show_icons=true&theme=vue)](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent)    
