@@ -113,6 +113,7 @@ def stream(history_list:list,chat_history:list[dict]):
         yield history_list
 
 def upload_file(file_obj,
+                split_tmp,
                 ):
     '''
     Upload your file to chat \n
@@ -128,13 +129,15 @@ def upload_file(file_obj,
     # initialize splitter
     text_splitter = CharacterTextSplitter(chunk_size=150, chunk_overlap=10)
     split_docs = text_splitter.split_documents(document)
-    return split_docs
+    split_tmp.append(split_docs)
+    return split_tmp
 
 def ask_file(split_docs:list,
             file_ask_history_list:list,
             question_prompt: str,
             file_answer:list,
-            model_choice:str):
+            model_choice:str,
+            sum_type:str):
     '''
     send splitted file to LLM
     '''
@@ -143,14 +146,17 @@ def ask_file(split_docs:list,
                     openai_api_type="azure",
                     deployment_name=model_choice, 
                     temperature=0.7)
-    
-    docsearch = Chroma.from_documents(split_docs, embeddings)
-    qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", 
-                                        retriever=docsearch.as_retriever(), 
-                                        return_source_documents=True)
-    result = qa({"query": question_prompt})
-    usr_prob = result["query"]
-    #ai_answer = result["result"]
+    if split_docs[-1] != None:
+        docsearch = Chroma.from_documents(split_docs[-1], embeddings)
+        qa = RetrievalQA.from_chain_type(llm=llm, chain_type=sum_type, 
+                                            retriever=docsearch.as_retriever(), 
+                                            return_source_documents=True)
+        result = qa({"query": question_prompt})
+        usr_prob = result["query"]
+    # if there is no file, let it become a common chat model
+    else:
+        result = llm(question_prompt)
+        usr_prob = question_prompt
     file_answer[0] = result
     file_ask_history_list.append([usr_prob,None])
     return file_ask_history_list,file_answer
@@ -176,7 +182,7 @@ def summarize_file(split_docs,chatbot,model_choice,sum_type):
     chain = load_summarize_chain(llm, chain_type=sum_type, verbose=True)
     
     # 执行总结链
-    summarize_result = chain.run(split_docs)
+    summarize_result = chain.run(split_docs[-1])
 
     # 构造 chatbox 格式
     chatbot.append(["Please summarize the file for me.",None])
@@ -245,7 +251,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                             presence_penalty = gr.Slider(-2, 2, value=0, step=0.1, label="frequency_penalty",
                                                         info="话题新鲜度：值越大，越可能扩展到新的话题")
             with gr.Tab("chatfiles"):
-                split_tmp = gr.State()
+                split_tmp = gr.State(['0'])
                 sum_result = gr.State()
                 # set a element to aviod indexerror
                 file_answer = gr.State(['0']) 
@@ -275,9 +281,12 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     send.click(lambda: gr.update(value=''), [],[message])
     
     # chat_file button event
-    file.upload(upload_file,inputs=[file],outputs=[split_tmp],show_progress="full")
-    chat_with_file.click(ask_file,inputs=[split_tmp,chat_bot,message,file_answer,model_choice],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
+    file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp],show_progress="full")
+    chat_with_file.click(ask_file,inputs=[split_tmp,chat_bot,message,file_answer,model_choice,sum_type],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
     summarize.click(summarize_file,inputs=[split_tmp,chat_bot,model_choice,sum_type],outputs=[sum_result,chat_bot]).then(sum_stream,[sum_result,chat_bot],[chat_bot])
+
+    chat_with_file.click(lambda: gr.update(value=''), [],[message])
+    summarize.click(lambda: gr.update(value=''), [],[message])
 
 demo.queue().launch(inbrowser=True,debug=True,
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"
