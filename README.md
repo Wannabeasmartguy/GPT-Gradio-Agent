@@ -53,6 +53,8 @@ You can also use "System Prompt" to let it play a role of what you want, and set
 
 - [ ] Import and export chat history
 
+- [ ] **Use llama-cpp to run local models and have conversations on the CPU**
+
 # About
 
 [![GPT-Gradio-Agent](https://github-readme-stats-wannabeasmartguy.vercel.app/api?username=Wannabeasmartguy&show_icons=true&theme=vue)](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent)    
