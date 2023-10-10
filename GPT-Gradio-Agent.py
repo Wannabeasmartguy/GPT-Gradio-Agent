@@ -4,7 +4,7 @@ import time
 import os
 from dotenv import load_dotenv
 import pandas
-# from utils import *
+from vecstore import *
 
 # import langchain to chat with file
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -258,6 +258,14 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 
                 with gr.Column():
                     file = gr.File(label="The file you want to chat with")
+                    vector_path = gr.Text(label="Knowledge base save path",
+                                          info="Choose the folder you want to save, and PASTE THE ABSOLUTE PATH here")
+                    vector_content = gr.DataFrame(label="Knowledge Base Document Catalog",
+                                                  interactive=False,
+                                                  )
+                    with gr.Column():
+                        load_vec = gr.Button(value="Load your knowledge base")
+                        add_file = gr.Button(value="Add file to knowledge base")
                     sum_type = gr.Radio(choices=[("小文件(file with few words)","stuff"),("大文件(file with a large word count)","refine")],
                                         value="stuff",
                                         label="Choose the type of file to be summarized",
@@ -282,11 +290,17 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     
     # chat_file button event
     file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp],show_progress="full")
+    #file.clear(lambda: gr.update(value=None), [],[file])
+    #file.clear(lambda split_tmp: gr.update(value=None), [],[split_tmp])
     chat_with_file.click(ask_file,inputs=[split_tmp,chat_bot,message,file_answer,model_choice,sum_type],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
     summarize.click(summarize_file,inputs=[split_tmp,chat_bot,model_choice,sum_type],outputs=[sum_result,chat_bot]).then(sum_stream,[sum_result,chat_bot],[chat_bot])
 
     chat_with_file.click(lambda: gr.update(value=''), [],[message])
     summarize.click(lambda: gr.update(value=''), [],[message])
+
+    vector_path.blur(create_vectorstore,inputs=[vector_path])
+    load_vec.click(load_vectorstore,inputs=[vector_path],outputs=[vector_content])
+    add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp])
 
 demo.queue().launch(inbrowser=True,debug=True,
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"
