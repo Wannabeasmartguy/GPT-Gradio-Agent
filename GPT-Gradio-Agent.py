@@ -265,9 +265,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                             vector_content = gr.DataFrame(label="Knowledge Base Document Catalog",
                                                         interactive=False,
                                                         )
-                            file_list = gr.Dropdown(choices=["无文件"],
-                                                    value="无文件",
-                                                    interactive=True,
+                            file_list = gr.Dropdown(interactive=True,
                                                     # allow_custom_value=True,
                                                     label="File list")
                         with gr.Column():
