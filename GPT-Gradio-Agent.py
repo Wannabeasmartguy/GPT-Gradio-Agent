@@ -4,7 +4,7 @@ import time
 import os
 from dotenv import load_dotenv
 import pandas
-from vecstore import *
+from vecstore.vecstore import * 
 
 # import langchain to chat with file
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -258,14 +258,24 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 
                 with gr.Column():
                     file = gr.File(label="The file you want to chat with")
-                    vector_path = gr.Text(label="Knowledge base save path",
-                                          info="Choose the folder you want to save, and PASTE THE ABSOLUTE PATH here")
-                    vector_content = gr.DataFrame(label="Knowledge Base Document Catalog",
-                                                  interactive=False,
-                                                  )
-                    with gr.Column():
-                        load_vec = gr.Button(value="Load your knowledge base")
-                        add_file = gr.Button(value="Add file to knowledge base")
+                    with gr.Group():
+                        vector_path = gr.Text(label="Knowledge base save path",
+                                            info="Choose the folder you want to save, and PASTE THE ABSOLUTE PATH here")
+                        with gr.Row():
+                            vector_content = gr.DataFrame(label="Knowledge Base Document Catalog",
+                                                        interactive=False,
+                                                        )
+                            file_list = gr.Dropdown(choices=["无文件"],
+                                                    value="无文件",
+                                                    interactive=True,
+                                                    # allow_custom_value=True,
+                                                    label="File list")
+                        with gr.Column():
+                            create_vec_but = gr.Button(value="Create a new knowledge base")
+                            load_vec = gr.Button(value="Load your knowledge base")
+                            with gr.Row():
+                                add_file = gr.Button(value="Add it(The file uploaded) to knowledge base")
+                                delete_file = gr.Button(value="Delete it(selected in dropdown) from knowledge base")
                     sum_type = gr.Radio(choices=[("小文件(file with few words)","stuff"),("大文件(file with a large word count)","refine")],
                                         value="stuff",
                                         label="Choose the type of file to be summarized",
@@ -299,9 +309,12 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     summarize.click(lambda: gr.update(value=''), [],[message])
 
     vector_path.blur(create_vectorstore,inputs=[vector_path])
-    load_vec.click(load_vectorstore,inputs=[vector_path],outputs=[vector_content])
-    add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp])
+    create_vec_but.click(create_vectorstore,inputs=[vector_path])
+    load_vec.click(load_vectorstore,inputs=[vector_path],outputs=[vector_content]).then(refresh_file_list, [vector_content],outputs=file_list)
+    #file_list.change(refresh_file_list,inputs=[vector_content],outputs=file_list)
+    add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp,file]).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content]).then(refresh_file_list, [vector_content],outputs=file_list)
+    delete_file.click(delete_flie_in_vectorstore,inputs=file_list).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content]).then(refresh_file_list, [vector_content],outputs=file_list)
 
-demo.queue().launch(inbrowser=True,debug=True,
+demo.queue().launch(inbrowser=False,debug=True,
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"
                     )
