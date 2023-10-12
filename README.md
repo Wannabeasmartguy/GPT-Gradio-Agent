@@ -15,7 +15,10 @@ You can also use "System Prompt" to let it play a role of what you want, and set
 
 ## Get Started
 0. Use `git clone https://github.com/Wannabeasmartguy/GPT-Gradio-Agent.git` to pull the codes；
+
 > If you don't have Git installed, you can also just download the `GPT-Gradio-Agent.py` and `.env_example`.
+
+Then use `pip install -r requirements.txt` on the Command Prompt to install the environment.
 
 1. Get [Azure OpenAI API Key](https://portal.azure.com/#home);
 
@@ -39,21 +42,19 @@ You can also use "System Prompt" to let it play a role of what you want, and set
 
 - [x] Choose models
 
-- [x] Chat with documents
+- [ ] Chat with document
 
   - [x] Chat with single file
   
-  - [x] Summarize the file 
+  - [x] Summarize the file
   
-  - [ ] Chat with multiple files
+  - [x] Local knowledge base management
   
-  - [ ] Dialogue files management
+  - [ ] Chat with whole knowledge base
 
 - [ ] Local storage of data
 
 - [ ] Import and export chat history
-
-- [ ] **Use llama-cpp to run local models and have conversations on the CPU**
 
 # About
 
