@@ -10,11 +10,14 @@
 
 ## 快速开始
 0. 使用`git clone https://github.com/Wannabeasmartguy/GPT-Gradio-Agent.git`拉取代码；
+
 > 如果你没有安装 Git ，也可以只下载`GPT-Gradio-Agent.py`和`.env_example`。
+
+  然后使用在命令行中输入 `pip install -r requirements.txt` 来安装运行环境。
 
 1. 获取[Azure OpenAI API Key](https://portal.azure.com/#home);
 
-2. 将`.env_example`重命名为`.env`，修改环境变量`OPENAI_API_KEY`和`OPENAI_API_BASE`;  
+2. 复制 `.env_example`并重命名为`.env`，修改环境变量`OPENAI_API_KEY`和`OPENAI_API_BASE`;  
   > `OPENAI_API_KEY`：Azure OpenAI 的 api key；  
   > `OPENAI_API_BASE`：Azure OpenAI 的提供的“终结点”
 
@@ -39,16 +42,16 @@
   - [x] 单文件对话
   
   - [x] 文件全文总结
+
+  - [x] 知识库本地存储
   
+  - [x] 知识库本地管理
+
   - [ ] 多文件对话
-  
-  - [ ] 对话文件管理
 
 - [ ] 数据本地存储
 
 - [ ] 聊天记录导入、导出
-
-- [ ] **使用 llama-cpp 实现 CPU 上运行模型进行对话**
 
 # 关于
 [![GPT-Gradio-Agent](https://github-readme-stats-wannabeasmartguy.vercel.app/api?username=Wannabeasmartguy&show_icons=true&theme=vue)](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent)    
