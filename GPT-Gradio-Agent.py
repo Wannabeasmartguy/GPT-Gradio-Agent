@@ -137,10 +137,10 @@ def upload_file(file_obj,
         split_docs = text_splitter.split_documents(document)
         split_tmp.append(split_docs)
         progress(1, desc="Dealing...")
+        gr.Info("Processing completed.")
     except (PDFInfoNotInstalledError,FileNotFoundError):
         raise gr.Error("PDF dealing error.This may be due to formatting issues (non-standard formats)")
 
-    gr.Info("Processing completed.")
     return split_tmp,gr.File(label="The file you want to chat with")
 
 def ask_file(split_docs:list,
@@ -309,8 +309,6 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     
     # chat_file button event
     file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full")
-    #file.clear(lambda: gr.update(value=None), [],[file])
-    #file.clear(lambda split_tmp: gr.update(value=None), [],[split_tmp])
     chat_with_file.click(ask_file,inputs=[split_tmp,chat_bot,message,file_answer,model_choice,sum_type],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
     summarize.click(summarize_file,inputs=[split_tmp,chat_bot,model_choice,sum_type],outputs=[sum_result,chat_bot]).then(sum_stream,[sum_result,chat_bot],[chat_bot])
 
@@ -319,10 +317,10 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 
     # Manage vectorstore event
     create_vec_but.click(create_vectorstore,inputs=[vector_path])
-    load_vec.click(load_vectorstore,inputs=[vector_path],outputs=[vector_content]).then(refresh_file_list, [vector_content],outputs=file_list)
+    load_vec.click(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
     #file_list.change(refresh_file_list,inputs=[vector_content],outputs=file_list)
-    add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp,file]).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content]).then(refresh_file_list, [vector_content],outputs=file_list)
-    delete_file.click(delete_flie_in_vectorstore,inputs=file_list).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content]).then(refresh_file_list, [vector_content],outputs=file_list)
+    add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp,file],outputs=[vector_content,file_list]).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
+    delete_file.click(delete_flie_in_vectorstore,inputs=file_list).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
 
 demo.queue().launch(inbrowser=False,debug=True,
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"

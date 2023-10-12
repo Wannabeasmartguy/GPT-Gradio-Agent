@@ -25,7 +25,8 @@ def create_vectorstore(persist_vec_path:str):
 
 def add_file_in_vectorstore(persist_vec_path:str, 
                             split_docs:list,
-                            file_obj   # get it from 'file' (gr.file)
+                            file_obj,   # get it from 'file' (gr.file)
+                            progress=gr.Progress()
                             ):
     '''
     Add file to vectorstore.
@@ -51,6 +52,7 @@ def add_file_in_vectorstore(persist_vec_path:str,
     
     vct_store = vectorstore.get()
     unique_sources = set(vct_store['metadatas'][i]['source'] for i in range(len(vct_store['metadatas'])))
+    progress(0.3, desc="Updating knowledge base...")
     
     # List of names of files in kownledge base
     vec_file_names = [source.split('/')[-1].split('\\')[-1] for source in unique_sources]
@@ -61,6 +63,8 @@ def add_file_in_vectorstore(persist_vec_path:str,
     
     # If file is already exist, it won't be added repeatedly
     vectorstore.add_documents(documents=split_docs[-1])
+    progress(1, desc="Adding the file to the knowledge base...")
+    return gr.DataFrame(),gr.Dropdown()
 
 # def save_vectorstore(vectorstore:Chroma):
 #     '''
@@ -68,7 +72,8 @@ def add_file_in_vectorstore(persist_vec_path:str,
 #     '''
 #     vectorstore.persist()
 
-def delete_flie_in_vectorstore(file_list
+def delete_flie_in_vectorstore(file_list,
+                               progress=gr.Progress()
                                ):
     '''
     Get the file's ids first, then delete by vector IDs.
@@ -91,11 +96,16 @@ def delete_flie_in_vectorstore(file_list
             # If it matches, add the corresponding id to the list
             ids_for_target_file.append(metadata['ids'][i])
 
+    progress(0.9, desc="Document comparison in progress...")
+
     # print("IDs for target file:", ids_for_target_file)
     try:
         vectorstore.delete(ids=ids_for_target_file)
+        progress(1, desc="File deleting...")
+        gr.Info("The selected file has been deleted")
     except ValueError as v:
         raise gr.Error('File does not exist in vectorstore.')
+    return
 
 
 def load_vectorstore(persist_vec_path:str):
@@ -121,9 +131,13 @@ def load_vectorstore(persist_vec_path:str):
 
     df = pd.DataFrame(file_names, columns=['文件名称'])
 
-    return df
+    gr.Info('Successfully load kowledge base.')
+    return df,gr.Dropdown(choices=file_names)
 
 def refresh_file_list(df):
+    '''
+    abandon temporarily
+    '''
     file_list = df['文件名称'].tolist()
     gr.Info('Successfully update kowledge base.')
     return gr.Dropdown.update(choices=file_list)
