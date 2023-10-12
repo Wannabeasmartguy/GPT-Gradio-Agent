@@ -114,6 +114,7 @@ def stream(history_list:list,chat_history:list[dict]):
 
 def upload_file(file_obj,
                 split_tmp,
+                progress=gr.Progress()
                 ):
     '''
     Upload your file to chat \n
@@ -121,16 +122,26 @@ def upload_file(file_obj,
     return: 
     list of files are splitted.
     '''
-
-    # load your document
-    loader = UnstructuredFileLoader(file_obj.name)
-    document = loader.load()
+    from pdf2image.exceptions import PDFInfoNotInstalledError
+    try:
+        # load your document
+        loader = UnstructuredFileLoader(file_obj.name)
+        document = loader.load()
+        progress(0.3, desc="Loading the file...")
+    except FileNotFoundError:
+        raise gr.Error("File upload failed. Please try again.")
 
     # initialize splitter
-    text_splitter = CharacterTextSplitter(chunk_size=150, chunk_overlap=10)
-    split_docs = text_splitter.split_documents(document)
-    split_tmp.append(split_docs)
-    return split_tmp
+    try:
+        text_splitter = CharacterTextSplitter(chunk_size=150, chunk_overlap=10)
+        split_docs = text_splitter.split_documents(document)
+        split_tmp.append(split_docs)
+        progress(1, desc="Dealing...")
+    except (PDFInfoNotInstalledError,FileNotFoundError):
+        raise gr.Error("PDF dealing error.This may be due to formatting issues (non-standard formats)")
+
+    gr.Info("Processing completed.")
+    return split_tmp,gr.File(label="The file you want to chat with")
 
 def ask_file(split_docs:list,
             file_ask_history_list:list,
@@ -297,7 +308,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     send.click(lambda: gr.update(value=''), [],[message])
     
     # chat_file button event
-    file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp],show_progress="full")
+    file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full")
     #file.clear(lambda: gr.update(value=None), [],[file])
     #file.clear(lambda split_tmp: gr.update(value=None), [],[split_tmp])
     chat_with_file.click(ask_file,inputs=[split_tmp,chat_bot,message,file_answer,model_choice,sum_type],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
@@ -306,7 +317,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     chat_with_file.click(lambda: gr.update(value=''), [],[message])
     summarize.click(lambda: gr.update(value=''), [],[message])
 
-    vector_path.blur(create_vectorstore,inputs=[vector_path])
+    # Manage vectorstore event
     create_vec_but.click(create_vectorstore,inputs=[vector_path])
     load_vec.click(load_vectorstore,inputs=[vector_path],outputs=[vector_content]).then(refresh_file_list, [vector_content],outputs=file_list)
     #file_list.change(refresh_file_list,inputs=[vector_content],outputs=file_list)

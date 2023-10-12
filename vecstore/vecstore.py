@@ -8,11 +8,19 @@ def create_vectorstore(persist_vec_path:str):
     '''
     Create vectorstore.
     '''
-    embeddings = OpenAIEmbeddings()
+    if persist_vec_path == "":
+        raise gr.Error("Please provide a path to persist the vectorstore.")
+    
+    import os
+    if os.path.isabs(persist_vec_path):
+        embeddings = OpenAIEmbeddings()
 
-    global vectorstore
-    vectorstore = Chroma(persist_directory=persist_vec_path,embedding_function=embeddings)
-    vectorstore.persist()
+        global vectorstore
+        vectorstore = Chroma(persist_directory=persist_vec_path,embedding_function=embeddings)
+        vectorstore.persist()
+    else:
+        raise gr.Error("The path is not valid.")
+    
     return vectorstore
 
 def add_file_in_vectorstore(persist_vec_path:str, 
@@ -30,8 +38,8 @@ def add_file_in_vectorstore(persist_vec_path:str,
         global vectorstore
         vectorstore = Chroma(persist_directory=persist_vec_path, 
                              embedding_function=OpenAIEmbeddings())
-    #else:
-    #    vectorstore = Chroma(embedding_function=OpenAIEmbeddings())
+    else:
+        raise gr.Error("You haven't chosen a knowledge base yet.")
     
     # Before we add file, we should detect if there is a file with the same name
     import os
@@ -65,8 +73,13 @@ def delete_flie_in_vectorstore(file_list
     '''
     Get the file's ids first, then delete by vector IDs.
     '''
+
     # Specify the target file
-    metadata = vectorstore.get()
+    try:
+        metadata = vectorstore.get()
+    except NameError as n:
+        raise gr.Error('Vectorstore is not initialized.')
+
     # Initialize an empty list to store the ids
     ids_for_target_file = []
 
@@ -79,7 +92,10 @@ def delete_flie_in_vectorstore(file_list
             ids_for_target_file.append(metadata['ids'][i])
 
     # print("IDs for target file:", ids_for_target_file)
-    vectorstore.delete(ids=ids_for_target_file)
+    try:
+        vectorstore.delete(ids=ids_for_target_file)
+    except ValueError as v:
+        raise gr.Error('File does not exist in vectorstore.')
 
 
 def load_vectorstore(persist_vec_path:str):
@@ -92,7 +108,7 @@ def load_vectorstore(persist_vec_path:str):
         vectorstore = Chroma(persist_directory=persist_vec_path, 
                              embedding_function=OpenAIEmbeddings())
     else:
-        vectorstore = Chroma(embedding_function=OpenAIEmbeddings())
+        raise gr.Error("You didn't provide an absolute path to the knowledge base")
 
     vct_store = vectorstore.get()
     unique_sources = set(vct_store['metadatas'][i]['source'] for i in range(len(vct_store['metadatas'])))
