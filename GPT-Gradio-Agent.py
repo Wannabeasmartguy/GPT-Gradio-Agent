@@ -143,41 +143,15 @@ def upload_file(file_obj,
 
     return split_tmp,gr.File(label="The file you want to chat with")
 
-def ask_file(split_docs:list,
-            file_ask_history_list:list,
-            question_prompt: str,
-            file_answer:list,
-            model_choice:str,
-            sum_type:str):
-    '''
-    send splitted file to LLM
-    '''
-    embeddings = OpenAIEmbeddings()
-    llm = AzureChatOpenAI(model=model_choice,
-                    openai_api_type="azure",
-                    deployment_name=model_choice, 
-                    temperature=0.7)
-    if split_docs[-1] != None:
-        docsearch = Chroma.from_documents(split_docs[-1], embeddings)
-        qa = RetrievalQA.from_chain_type(llm=llm, chain_type=sum_type, 
-                                            retriever=docsearch.as_retriever(), 
-                                            return_source_documents=True)
-        result = qa({"query": question_prompt})
-        usr_prob = result["query"]
-    # if there is no file, let it become a common chat model
-    else:
-        result = llm(question_prompt)
-        usr_prob = question_prompt
-    file_answer[0] = result
-    file_ask_history_list.append([usr_prob,None])
-    return file_ask_history_list,file_answer
-
 def file_ask_stream(file_ask_history_list:list[list],file_answer:list):
     '''
     Used to make file-answer looks like stream;\n
     'file_ask_history_list' will be transfered to chatbot
     '''
-    bot_message = file_answer[0]["result"]
+    try:
+        bot_message = file_answer[0]["result"]
+    except TypeError:
+        raise gr.Error("No model response obtained")
     file_ask_history_list[-1][1] = ""
     for character in bot_message:
         file_ask_history_list[-1][1] += character
@@ -309,7 +283,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     
     # chat_file button event
     file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full")
-    chat_with_file.click(ask_file,inputs=[split_tmp,chat_bot,message,file_answer,model_choice,sum_type],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
+    chat_with_file.click(ask_file,inputs=[chat_bot,message,file_answer,model_choice,sum_type,vector_path,file_list],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
     summarize.click(summarize_file,inputs=[split_tmp,chat_bot,model_choice,sum_type],outputs=[sum_result,chat_bot]).then(sum_stream,[sum_result,chat_bot],[chat_bot])
 
     chat_with_file.click(lambda: gr.update(value=''), [],[message])

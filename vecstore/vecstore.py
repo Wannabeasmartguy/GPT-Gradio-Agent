@@ -1,8 +1,14 @@
 
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.chat_models import AzureChatOpenAI
+from langchain.chains import RetrievalQA
 import gradio as gr
 import pandas as pd
+
+def _init():
+    global vec_store
+    vec_store = Chroma()
 
 def create_vectorstore(persist_vec_path:str):
     '''
@@ -15,7 +21,7 @@ def create_vectorstore(persist_vec_path:str):
     if os.path.isabs(persist_vec_path):
         embeddings = OpenAIEmbeddings()
 
-        global vectorstore
+        # global vectorstore
         vectorstore = Chroma(persist_directory=persist_vec_path,embedding_function=embeddings)
         vectorstore.persist()
     else:
@@ -141,3 +147,79 @@ def refresh_file_list(df):
     file_list = df['文件名称'].tolist()
     gr.Info('Successfully update kowledge base.')
     return gr.Dropdown.update(choices=file_list)
+
+def find_source_paths(filenames, data):
+    '''
+    Retrieve file paths in a vector database based on file name and remove duplicate paths
+    '''
+    paths = []
+    for metadata in data['metadatas']:
+        source = metadata.get('source')
+        if source:
+            for filename in filenames:
+                if filename in source and source not in paths:
+                    paths.append(source)
+    return paths
+
+def ask_file(file_ask_history_list:list,
+            question_prompt: str,
+            file_answer:list,
+            model_choice:str,
+            sum_type:str,
+            persist_vec_path,
+            file_list
+            ):
+    '''
+    send splitted file to LLM
+    '''
+    llm = AzureChatOpenAI(model=model_choice,
+                    openai_api_type="azure",
+                    deployment_name=model_choice, 
+                    temperature=0.7)
+    
+    source_data = vectorstore.get()
+    filter_goal = find_source_paths(filenames=file_list,data=source_data)
+
+    if persist_vec_path != None:
+        # docsearch = Chroma.from_documents(split_docs[-1], embeddings)
+        if file_list == "Unselect file(s)" or file_list != None:    
+            # unselect file: retrieve whole knowledge base
+            try:
+                qa = RetrievalQA.from_chain_type(llm=llm, chain_type=sum_type, 
+                                                    retriever=vectorstore.as_retriever(search_type="mmr"), 
+                                                    return_source_documents=True)
+                result = qa({"query": question_prompt})
+            except (NameError):
+                raise gr.Error("You have not load kownledge base yet.")
+        else:
+            # only selected one file
+            # Retrieve the specified knowledge base with filter
+            qa = RetrievalQA.from_chain_type(llm=llm, chain_type=sum_type, 
+                                                retriever=vectorstore.as_retriever(search_type="mmr",search_kwargs={'filter': {"source":filter_goal[0]}}), 
+                                                return_source_documents=True)
+            
+            # get chain's result
+            result = qa({"query": question_prompt})
+
+        usr_prob = result["query"]
+    # if there is no file, let it become a common chat model
+    else:
+        gr.Info("You don't select your knowledge base, so the result is presented by base model.")
+        result = llm(question_prompt)+"\n引用文档："
+        usr_prob = question_prompt
+    file_answer[0] = result
+    file_ask_history_list.append([usr_prob,None])
+    return file_ask_history_list,file_answer
+
+def find_source_paths(filenames:list, data):
+    """
+    Find the source paths of the files in the knowledge base.
+    """
+    paths = []
+    for metadata in data['metadatas']:
+        source = metadata.get('source')
+        if source:
+            for filename in filenames:
+                if filename in source and source not in paths:
+                    paths.append(source)
+    return paths
