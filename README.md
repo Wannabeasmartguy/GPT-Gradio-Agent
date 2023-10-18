@@ -50,9 +50,11 @@ Then use `pip install -r requirements.txt` on the Command Prompt to install the 
   
   - [x] Local knowledge base management
   
-  - [ ] Chat with whole knowledge base
-
-- [ ] Local storage of data
+  - [x] Chat with whole knowledge base
+  
+    - [ ] List citation sources
+  
+  - [ ] Estimated cost of embedding files
 
 - [ ] Import and export chat history
 

@@ -1,4 +1,4 @@
-
+from langchain.chains.summarize import load_summarize_chain
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import AzureChatOpenAI
@@ -148,26 +148,14 @@ def refresh_file_list(df):
     gr.Info('Successfully update kowledge base.')
     return gr.Dropdown.update(choices=file_list)
 
-def find_source_paths(filenames, data):
-    '''
-    Retrieve file paths in a vector database based on file name and remove duplicate paths
-    '''
-    paths = []
-    for metadata in data['metadatas']:
-        source = metadata.get('source')
-        if source:
-            for filename in filenames:
-                if filename in source and source not in paths:
-                    paths.append(source)
-    return paths
-
 def ask_file(file_ask_history_list:list,
             question_prompt: str,
             file_answer:list,
             model_choice:str,
             sum_type:str,
             persist_vec_path,
-            file_list
+            file_list,
+            filter_type:str,
             ):
     '''
     send splitted file to LLM
@@ -178,11 +166,11 @@ def ask_file(file_ask_history_list:list,
                     temperature=0.7)
     
     source_data = vectorstore.get()
-    filter_goal = find_source_paths(filenames=file_list,data=source_data)
+    filter_goal = find_source_paths(file_list,source_data)
 
     if persist_vec_path != None:
-        # docsearch = Chroma.from_documents(split_docs[-1], embeddings)
-        if file_list == "Unselect file(s)" or file_list != None:    
+        # Codes here in "if" may be deleted or modified later
+        if filter_type == "All":    
             # unselect file: retrieve whole knowledge base
             try:
                 qa = RetrievalQA.from_chain_type(llm=llm, chain_type=sum_type, 
@@ -191,7 +179,7 @@ def ask_file(file_ask_history_list:list,
                 result = qa({"query": question_prompt})
             except (NameError):
                 raise gr.Error("You have not load kownledge base yet.")
-        else:
+        elif filter_type == "Selected file":
             # only selected one file
             # Retrieve the specified knowledge base with filter
             qa = RetrievalQA.from_chain_type(llm=llm, chain_type=sum_type, 
@@ -211,15 +199,29 @@ def ask_file(file_ask_history_list:list,
     file_ask_history_list.append([usr_prob,None])
     return file_ask_history_list,file_answer
 
-def find_source_paths(filenames:list, data):
+def summarize_file(split_docs,chatbot,model_choice,sum_type):
+    llm = AzureChatOpenAI(model=model_choice,
+                    openai_api_type="azure",
+                    deployment_name=model_choice, # <----------设置选择模型的时候修改这里
+                    temperature=0.7)
+    # 创建总结链
+    chain = load_summarize_chain(llm, chain_type=sum_type, verbose=True)
+    
+    # 执行总结链
+    summarize_result = chain.run(split_docs[-1])
+
+    # 构造 chatbox 格式
+    chatbot.append(["Please summarize the file for me.",None])
+    return summarize_result,chatbot
+
+def find_source_paths(filename:str, data:dict):
     """
     Find the source paths of the files in the knowledge base.
+    return --> list
     """
     paths = []
     for metadata in data['metadatas']:
         source = metadata.get('source')
-        if source:
-            for filename in filenames:
-                if filename in source and source not in paths:
-                    paths.append(source)
+        if source and filename in source and source not in paths:
+            paths.append(source)
     return paths
