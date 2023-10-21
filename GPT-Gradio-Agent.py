@@ -127,18 +127,15 @@ def upload_file(file_obj,
         loader = UnstructuredFileLoader(file_obj.name)
         document = loader.load()
         progress(0.3, desc="Loading the file...")
-    except FileNotFoundError:
-        raise gr.Error("File upload failed. Please try again.")
+    except (FileNotFoundError,PDFInfoNotInstalledError):
+        raise gr.Error("File upload failed. This may be due to formatting issues (non-standard formats)")
 
     # initialize splitter
-    try:
-        text_splitter = CharacterTextSplitter(chunk_size=150, chunk_overlap=10)
-        split_docs = text_splitter.split_documents(document)
-        split_tmp.append(split_docs)
-        progress(1, desc="Dealing...")
-        gr.Info("Processing completed.")
-    except (PDFInfoNotInstalledError,FileNotFoundError):
-        raise gr.Error("PDF dealing error.This may be due to formatting issues (non-standard formats)")
+    text_splitter = CharacterTextSplitter(chunk_size=150, chunk_overlap=10)
+    split_docs = text_splitter.split_documents(document)
+    split_tmp.append(split_docs)
+    progress(1, desc="Dealing...")
+    gr.Info("Processing completed.")
 
     return split_tmp,gr.File(label="The file you want to chat with")
 
@@ -229,7 +226,15 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 file_answer = gr.State(['0']) 
                 
                 with gr.Column():
-                    file = gr.File(label="The file you want to chat with")
+                    with gr.Group():
+                        file = gr.File(label="The file you want to chat with")
+                        with gr.Row():
+                            estimate_cost = gr.Text(label="Estimated cost:", 
+                                                    info="Estimated cost of embed file",
+                                                    scale=2)
+                            refresh_file_cost = gr.Button(value="Refresh file and estimate cost",
+                                                          scale=1)
+
                     with gr.Group():
                         vector_path = gr.Text(label="Knowledge base save path",
                                             info="Choose the folder you want to save, and PASTE THE ABSOLUTE PATH here")
@@ -272,7 +277,9 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     send.click(lambda: gr.update(value=''), [],[message])
     
     # chat_file button event
-    file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full")
+    file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full").then(cal_token_cost,[split_tmp],[estimate_cost])
+    file.clear(lambda:gr.update(value=''),[],[estimate_cost])
+    refresh_file_cost.click(lambda:gr.Text("预计消耗费用:To be calculated"),[],[estimate_cost]).then(lambda:gr.File(),[],[file]).then(lambda:gr.Text(),[],[estimate_cost])
     chat_with_file.click(ask_file,inputs=[chat_bot,message,file_answer,model_choice,sum_type,vector_path,file_list,filter_choice],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
     summarize.click(summarize_file,inputs=[split_tmp,chat_bot,model_choice,sum_type],outputs=[sum_result,chat_bot]).then(sum_stream,[sum_result,chat_bot],[chat_bot])
 

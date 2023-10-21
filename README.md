@@ -54,7 +54,7 @@ Then use `pip install -r requirements.txt` on the Command Prompt to install the 
   
     - [ ] List citation sources
   
-  - [ ] Estimated cost of embedding files
+  - [x] Estimated cost of embedding files
 
 - [ ] Import and export chat history
 

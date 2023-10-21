@@ -5,6 +5,7 @@ from langchain.chat_models import AzureChatOpenAI
 from langchain.chains import RetrievalQA
 import gradio as gr
 import pandas as pd
+import tiktoken
 
 def _init():
     global vec_store
@@ -225,3 +226,34 @@ def find_source_paths(filename:str, data:dict):
         if source and filename in source and source not in paths:
             paths.append(source)
     return paths
+
+def calculate_and_display_token_count(input_text:str,model_name:str):
+    '''
+    Calculate the token that embedding needs to be consumed, for being called
+    '''
+    # model name or encode type
+    encoder = tiktoken.encoding_for_model(model_name)   # model name
+    # encoder = tiktoken.get_encoding("cl100k_base")    # encode type
+
+    encoded_text = encoder.encode(input_text)
+    token_count = len(encoded_text)
+    pay_for_token = (token_count/1000) * 0.002
+    
+    # print(f"输入的文本: '{input_text}'")
+    # print(f"对应的编码: {encoded_text}")
+    # print(f"Token数量: {token_count}")
+    # print("预计消耗费用: $ %0.5f\n"%pay_for_token)
+    return pay_for_token
+
+def cal_token_cost(split_docs,model_name="text-embedding-ada-002"):
+    '''
+    Calculate the token that embedding needs to be consumed, for operation
+    '''
+    cost = 0
+    try:
+        for i in split_docs[-1]:
+            paid_per_doc = calculate_and_display_token_count(input_text=i.page_content,model_name=model_name)
+            cost += paid_per_doc
+        return gr.Text("预计消耗费用: $ %0.5f"%cost)
+    except AttributeError:
+        raise gr.Error("Cost calculating failed")
