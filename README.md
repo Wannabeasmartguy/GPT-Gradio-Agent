@@ -1,24 +1,30 @@
 # GPT-Gradio-Agent  
 
-[中文文档](README_zh.md)
+[中文文档](README_zh-cn.md) | **English**
 
-Build your own GPT Agent with  Azure OpenAI API and Gradio. 
+Build your own GPT Agent and manage your GPT-driven knowledge base with Azure OpenAI API (or OpenAI API) and Gradio! 
 
 > If you like this project, please star for it, this is the greatest encouragement to me!
 
-Press the "Chat with file" button, it will tell you what you want!
-> The "Send" button let you to chat with GPT **directly**，and the "Chat with file" button let you to **chat with file**。Both are presented in the same interface, but **memory is not connected**.
-![英文对话](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/8ac16117-6b48-42f9-a521-7d9702ba9c9b)
+## Basic Chatbox Interface
 
-You can also use "System Prompt" to let it play a role of what you want, and set the parameters.
+This is the basic Chatbox, where you can have a conversation with GPT and have them play the role of an expert to answer your questions through System Prompt.
 ![英文参数](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/e24645f6-ee92-4d2e-9565-805e21250546)
 
-## Get Started
+## GPT-driven knowledge base
+
+In this interface, you can **create and manage your own knowledge base** (CRUD) and **have GPT answer your questions** in conjunction with **specified documents** (or the **entire knowledge base**). 
+
+Very efficient!
+
+![chatfile界面](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/b04c6ccc-8ed7-4d99-8831-fde912ea6fcd)
+
+# Get Started
 0. Use `git clone https://github.com/Wannabeasmartguy/GPT-Gradio-Agent.git` to pull the codes；
 
-> If you don't have Git installed, you can also just download the `GPT-Gradio-Agent.py` and `.env_example`.
+> If you don't have Git installed, you can download the latest codes on the Github **Tag** page.
 
-Then use `pip install -r requirements.txt` on the Command Prompt to install the environment.
+Then open a **Command Prompt (CMD)** in the folder where the codes are stored, and use `pip install -r requirements.txt` to install the runtime environment.
 
 1. Get [Azure OpenAI API Key](https://portal.azure.com/#home);
 
@@ -27,10 +33,10 @@ Then use `pip install -r requirements.txt` on the Command Prompt to install the 
   > `OPENAI_API_BASE`：Access key provided by Azure OpenAI.
 
 3. Enjoy it!  
-  Use `python GPT-Gradio-Agent.py` in your terminal to run the codes.You can see the URL in your terminal, and the default local URL is http://127.0.0.1:7860.
-> The default username is 'admin' and the password is '123456', which can be changed by yourself.
+  Use `python GPT-Gradio-Agent.py` in your terminal to run the the codes.You can see the URL in your terminal, and the default local URL is http://127.0.0.1:7860.
+> The default username is 'admin' and the password is '123456', which can be changed by yourself.The login function is turned off by default, if you want to activate it, just change `inbrowser=False` to `inbrowser=True` and set your own account.
 
-## Todo List
+# Todo List
 
 - [x] Use system-level prompts for role-playing
 
