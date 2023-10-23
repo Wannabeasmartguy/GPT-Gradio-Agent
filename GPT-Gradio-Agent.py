@@ -260,7 +260,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                         sum_type = gr.Radio(choices=[("small file","stuff"),("large file","refine")],
                                             value="stuff",
                                             label="File size type",
-                                            info="也作用于“Summarize”。如果待总结字数较多，请选择“lagre size”（选“large size”可能导致超出 GPT 的最大 Token ）")
+                                            info="也作用于“Summarize”。如果待总结字数较多，请选择“lagre size”（选“small size”可能导致超出 GPT 的最大 Token ）")
 
     # Merge all handles that require input and output.
     input_param = [message, model_choice, chat_his, chat_bot, System_Prompt, 
