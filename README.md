@@ -20,9 +20,10 @@ Very efficient!
 ![chatfile界面](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/b04c6ccc-8ed7-4d99-8831-fde912ea6fcd)
 
 # Get Started
-0. Use `git clone https://github.com/Wannabeasmartguy/GPT-Gradio-Agent.git` to pull the codes；
 
-> If you don't have Git installed, you can download the latest codes on the Github **Tag** page.
+## Git
+
+0. Use `git clone https://github.com/Wannabeasmartguy/GPT-Gradio-Agent.git` to pull the codes；
 
 Then open a **Command Prompt (CMD)** in the folder where the codes are stored, and use `pip install -r requirements.txt` to install the runtime environment.
 
@@ -34,7 +35,14 @@ Then open a **Command Prompt (CMD)** in the folder where the codes are stored, a
 
 3. Enjoy it!  
   Use `python GPT-Gradio-Agent.py` in your terminal to run the the codes.You can see the URL in your terminal, and the default local URL is http://127.0.0.1:7860.
-> The default username is 'admin' and the password is '123456', which can be changed by yourself.The login function is turned off by default, if you want to activate it, just change `inbrowser=False` to `inbrowser=True` and set your own account.
+
+## Release package 
+
+If you don't have Git installed, you can download the latest code from the [release](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/releases) page.
+
+After extracting, follow **Step 1 and Step 2 above** to configure the environment, and finally **double-click `Run.bat`** to run the code.
+
+> The default username is 'admin' and the password is '123456', which can be changed by yourself.The login function is turned off by default.
 
 # Todo List
 
