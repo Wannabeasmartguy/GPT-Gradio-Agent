@@ -71,7 +71,11 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
   - [x] Estimated cost of embedding files
 
 - [ ] Import and export chat history
-
+  
+  - [x] chat history export
+  
+  - [ ] chat history import
+  
 # About
 
 [![GPT-Gradio-Agent](https://github-readme-stats-wannabeasmartguy.vercel.app/api?username=Wannabeasmartguy&show_icons=true&theme=vue)](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent)    

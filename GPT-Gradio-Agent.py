@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 import pandas
 from vecstore.vecstore import * 
+from gga_utils.common import *
 
 # import langchain to chat with file
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -177,6 +178,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
         '''
         # <center>GPT AGENT<center>
         <center>Use the agent make your work and life much more efficient.<center>
+        <center>📁 means *knowledgebase* in the interface.<center>
         '''
     )
     usr_msg = gr.State()
@@ -186,16 +188,23 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
             model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4"],
                                     value="gpt-35-turbo",
                                     label="Model",info="支持模型选择，立即生效")
-            chat_bot = gr.Chatbot(height=500,
-                                show_copy_button=True,
-                                bubble_full_width=False)
-            message = gr.Textbox(label="Input your prompt",
-                                        info="'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.")
+            with gr.Group():
+                chat_name = gr.Textbox(label="Chatbot name",
+                                       value="New chat",
+                                       info="对话名称将被用于导出聊天记录时的文件命名。")
+                chat_bot = gr.Chatbot(height=500,
+                                    show_copy_button=True,
+                                    bubble_full_width=False)
+            with gr.Row():
+                message = gr.Textbox(label="Input your prompt",
+                                     info="'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.",
+                                     scale=7)
+                export_his = gr.Button(value="Export Chat History",scale=1)
             with gr.Row():
                 clear = gr.ClearButton([message, chat_bot,chat_his],scale=1,size="sm")
                 send = gr.Button("Send",scale=2)
             with gr.Row():
-                chat_with_file = gr.Button(value="Chat with file (Valid for knowledge base)")
+                chat_with_file = gr.Button(value="Chat with file (Valid for 📁)")
                 summarize = gr.Button(value="Summarize (Valid only for uploaded file)")
 
         with gr.Column():
@@ -247,11 +256,11 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                                                     # allow_custom_value=True,
                                                     label="File list")
                         with gr.Column():
-                            create_vec_but = gr.Button(value="Create a new knowledge base")
-                            load_vec = gr.Button(value="Load your knowledge base")
+                            create_vec_but = gr.Button(value="Create a new knowledge base 📁")
+                            load_vec = gr.Button(value="Load your 📁 ")
                             with gr.Row():
-                                add_file = gr.Button(value="Add it (The file uploaded) to knowledge base")
-                                delete_file = gr.Button(value="Delete it (Selected in dropdown) from knowledge base")  
+                                add_file = gr.Button(value="Add it (The file uploaded) to 📁")
+                                delete_file = gr.Button(value="Delete it (Selected in dropdown) from 📁")  
                     with gr.Accordion("File chat setting"):
                         filter_choice = gr.Radio(choices=["All", "Selected file"],
                                                 value="All",
@@ -272,19 +281,20 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     message.submit(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
     send.click(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
     clear.click(rst_mem,inputs=chat_his,outputs=chat_his)
+    export_his.click(export_to_markdown,[chat_bot,chat_name])
 
-    message.submit(lambda: gr.update(value=''), [],[message])
-    send.click(lambda: gr.update(value=''), [],[message])
+    message.submit(lambda: gr.Textbox(value=''), [],[message])
+    send.click(lambda: gr.Textbox(value=''), [],[message])
     
     # chat_file button event
     file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full").then(cal_token_cost,[split_tmp],[estimate_cost])
-    file.clear(lambda:gr.update(value=''),[],[estimate_cost])
-    refresh_file_cost.click(lambda:gr.Text("预计消耗费用:To be calculated"),[],[estimate_cost]).then(lambda:gr.File(),[],[file]).then(lambda:gr.Text(),[],[estimate_cost])
+    file.clear(lambda:gr.Textbox(value=''),[],[estimate_cost])
+    refresh_file_cost.click(lambda:gr.Text(),[],[estimate_cost]).then(lambda:gr.File(),[],[file]).then(lambda:gr.Text(),[],[estimate_cost])
     chat_with_file.click(ask_file,inputs=[chat_bot,message,file_answer,model_choice,sum_type,vector_path,file_list,filter_choice],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
     summarize.click(summarize_file,inputs=[split_tmp,chat_bot,model_choice,sum_type],outputs=[sum_result,chat_bot]).then(sum_stream,[sum_result,chat_bot],[chat_bot])
 
-    chat_with_file.click(lambda: gr.update(value=''), [],[message])
-    summarize.click(lambda: gr.update(value=''), [],[message])
+    chat_with_file.click(lambda: gr.Textbox(value=''), [],[message])
+    summarize.click(lambda: gr.Textbox(value=''), [],[message])
 
     # Manage vectorstore event
     create_vec_but.click(create_vectorstore,inputs=[vector_path])

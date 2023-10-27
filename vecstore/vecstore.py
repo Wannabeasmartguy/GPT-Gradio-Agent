@@ -127,19 +127,23 @@ def load_vectorstore(persist_vec_path:str):
     else:
         raise gr.Error("You didn't provide an absolute path to the knowledge base")
 
-    vct_store = vectorstore.get()
-    unique_sources = set(vct_store['metadatas'][i]['source'] for i in range(len(vct_store['metadatas'])))
+    try:
+        vct_store = vectorstore.get()
+        unique_sources = set(vct_store['metadatas'][i]['source'] for i in range(len(vct_store['metadatas'])))
 
-    # Merge duplicate sources
-    merged_sources = ', '.join(unique_sources)
+        # Merge duplicate sources
+        merged_sources = ', '.join(unique_sources)
 
-    # Extract actual file names
-    file_names = [source.split('/')[-1].split('\\')[-1] for source in unique_sources]
+        # Extract actual file names
+        file_names = [source.split('/')[-1].split('\\')[-1] for source in unique_sources]
 
-    df = pd.DataFrame(file_names, columns=['文件名称'])
+        df = pd.DataFrame(file_names, columns=['文件名称'])
 
-    gr.Info('Successfully load kowledge base.')
-    return df,gr.Dropdown(choices=file_names)
+        gr.Info('Successfully load kowledge base.')
+        return df,gr.Dropdown(value=file_names[0],choices=file_names)
+    except IndexError:
+        gr.Info('No file in vectorstore.')
+        return df,gr.Dropdown(choices=[])
 
 def refresh_file_list(df):
     '''

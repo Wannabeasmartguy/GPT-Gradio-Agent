@@ -69,5 +69,9 @@
 
 - [ ] 聊天记录导入、导出
 
+  - [x] 聊天记录导出
+  
+  - [ ] 聊天记录导入
+
 # 关于
 [![GPT-Gradio-Agent](https://github-readme-stats-wannabeasmartguy.vercel.app/api?username=Wannabeasmartguy&show_icons=true&theme=vue)](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent)    
