@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import pandas
 from vecstore.vecstore import * 
 from gga_utils.common import *
+from gga_utils.theme import *
 
 # import langchain to chat with file
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -25,6 +26,9 @@ openai.api_type = os.getenv('OPENAI_API_TYPE')
 # initialize the embedding model setting 
 embedding_model = "text-embedding-ada-002"
 
+# 初始化主题
+set_theme = adjust_theme()
+
 #gr.Chatbot.postprocess = format_io
 
 # <---------- set environmental parameters --------->
@@ -43,6 +47,10 @@ def deliver(message:str,
     '''
     Response function for chat-only
     '''
+
+    # Avoid empty input
+    if message == "":
+        raise gr.Error("Please input a message")
 
     # System Prompt and User Prompt
     if system:
@@ -173,7 +181,7 @@ def rst_mem(chat_his:list):
     return chat_his
 
 # <---------- GUI ---------->
-with gr.Blocks(theme=gr.themes.Soft()) as demo:
+with gr.Blocks(theme=set_theme,css='style.css') as demo:
     gr.Markdown(
         '''
         # <center>GPT AGENT<center>
@@ -202,7 +210,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 export_his = gr.Button(value="Export Chat History",scale=1)
             with gr.Row():
                 clear = gr.ClearButton([message, chat_bot,chat_his],scale=1,size="sm")
-                send = gr.Button("Send",scale=2)
+                send = gr.Button("Send",variant='primary',elem_id="btn",scale=2)
             with gr.Row():
                 chat_with_file = gr.Button(value="Chat with file (Valid for 📁)")
                 summarize = gr.Button(value="Summarize (Valid only for uploaded file)")
@@ -279,7 +287,7 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
 
     # chatbot button event
     message.submit(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
-    send.click(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
+    send.click(deliver,input_param, output_param, queue=False).success(stream,[chat_bot,chat_his],chat_bot)
     clear.click(rst_mem,inputs=chat_his,outputs=chat_his)
     export_his.click(export_to_markdown,[chat_bot,chat_name])
 
@@ -303,6 +311,6 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp,file],outputs=[vector_content,file_list]).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
     delete_file.click(delete_flie_in_vectorstore,inputs=file_list).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
 
-demo.queue().launch(inbrowser=False,debug=True,
+demo.queue().launch(inbrowser=True,debug=True,show_api=False
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"
                     )
