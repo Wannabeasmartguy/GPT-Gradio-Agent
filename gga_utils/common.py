@@ -40,3 +40,30 @@ def export_to_markdown(messages, ex_name):
         file.write(markdown_text)
 
     return gr.Info("聊天记录已保存在“Output”目录下。")
+
+def init_history_list(chat_name="New chat"):
+    '''
+    Initialize the Radio value and choices.
+    '''
+    global history_list
+    history_list = []
+    history_list.append(chat_name)
+    return history_list
+
+def add_history_list(chat_name:str):
+    history_list.append(chat_name)
+    return gr.Radio(choices=history_list,
+                    value=history_list[-1],
+                    interactive=True)
+    
+def get_history_list():
+    pass
+
+def save_his_in_list(chat_name:str,
+                     sys_prompt:str,
+                     chatbot:list[list]):
+    '''
+    Used to save conversation history, include symstem prompt, user input and AI output.\n
+    `chat_name` -> choices (append in)\n
+    `sys_prompt` & `chatbot` -> gr.refresh
+    '''

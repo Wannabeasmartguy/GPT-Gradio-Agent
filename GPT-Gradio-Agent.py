@@ -181,7 +181,7 @@ def rst_mem(chat_his:list):
     return chat_his
 
 # <---------- GUI ---------->
-with gr.Blocks(theme=set_theme,css='style.css') as demo:
+with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     gr.Markdown(
         '''
         # <center>GPT AGENT<center>
@@ -192,17 +192,45 @@ with gr.Blocks(theme=set_theme,css='style.css') as demo:
     usr_msg = gr.State()
     chat_his = gr.State([])
     with gr.Row():
+        with gr.Column(elem_id="history"):
+            with gr.Row():
+                delete_dialog = gr.Button(
+                    icon=r"icon\delete_dialog.png",
+                    value="Delete Dialog",
+                    min_width=5,
+                    elem_id="btn_transparent",
+                    size="sm",
+                )
+                add_dialog = gr.ClearButton(
+                    components=[chat_his],
+                    icon=r"icon\add_dialog.png",
+                    #variant="primary",
+                    value="New Dialog",
+                    min_width=5,
+                    elem_id="btn_transparent",
+                    size="sm"
+                )
+            Historylist = gr.Radio(
+                #label="Dialog Box",
+                show_label=False,
+                interactive=True,
+                value=init_history_list()[0],
+                choices=init_history_list(),
+                elem_id="history-select-dropdown",
+            )
         with gr.Column(scale=2):
-            model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4"],
+            with gr.Group():
+                model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4"],
                                     value="gpt-35-turbo",
                                     label="Model",info="支持模型选择，立即生效")
-            with gr.Group():
                 chat_name = gr.Textbox(label="Chatbot name",
-                                       value="New chat",
+                                       interactive=True,
+                                       value=init_history_list()[0],
                                        info="对话名称将被用于导出聊天记录时的文件命名。")
-                chat_bot = gr.Chatbot(height=500,
-                                    show_copy_button=True,
-                                    bubble_full_width=False)
+            chat_bot = gr.Chatbot(height=500,
+                                  show_label=False,
+                                  show_copy_button=True,
+                                  bubble_full_width=False)
             with gr.Row():
                 message = gr.Textbox(label="Input your prompt",
                                      info="'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.",
@@ -279,6 +307,9 @@ with gr.Blocks(theme=set_theme,css='style.css') as demo:
                                             label="File size type",
                                             info="也作用于“Summarize”。如果待总结字数较多，请选择“lagre size”（选“small size”可能导致超出 GPT 的最大 Token ）")
 
+    # Radio control
+    add_dialog.click(add_history_list,chat_name,Historylist)
+
     # Merge all handles that require input and output.
     input_param = [message, model_choice, chat_his, chat_bot, System_Prompt, 
                    Context_length, Temperature,max_tokens,top_p,frequency_penalty,
@@ -289,7 +320,7 @@ with gr.Blocks(theme=set_theme,css='style.css') as demo:
     message.submit(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
     send.click(deliver,input_param, output_param, queue=False).success(stream,[chat_bot,chat_his],chat_bot)
     clear.click(rst_mem,inputs=chat_his,outputs=chat_his)
-    export_his.click(export_to_markdown,[chat_bot,chat_name])
+    # export_his.click(export_to_markdown,[chat_bot,chat_name])
 
     message.submit(lambda: gr.Textbox(value=''), [],[message])
     send.click(lambda: gr.Textbox(value=''), [],[message])
