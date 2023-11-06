@@ -2,15 +2,138 @@ from langchain.chains.summarize import load_summarize_chain
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import AzureChatOpenAI
-from langchain.chains import RetrievalQA
+from langchain.chains import RetrievalQA,ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
+import openai
 import gradio as gr
 import pandas as pd
 import tiktoken
+
+global chat_memory
+chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages=True)
 
 def _init():
     global vec_store
     vec_store = Chroma()
 
+def convert_messages(messages:list):
+    """
+    Converts messages to the format expected by the chat model.
+    """
+    converted_messages = []
+    for message in messages:
+        if message.type == "human":
+            converted_message = {"role": "user", "content": message.content}
+        elif message.type == "ai":
+            converted_message = {"role": "assistant", "content": message.content}
+        else:
+            # Handle unknown message type
+            continue
+        converted_messages.append(converted_message)
+    if converted_messages == []:
+        return None
+    return converted_messages
+
+def deliver(message:str,
+            model_choice:str,
+            chat_history:list, 
+            chat_history_list:list,
+            system:str,
+            context_length:int, 
+            temperature:float,
+            max_tokens:int,
+            top_p:float,
+            frequency_penalty:float,
+            presence_penalty:float,
+            #chat_memory:ConversationBufferMemory
+            ):
+    '''
+    Response function for chat-only
+    '''
+    global chat_memory
+    if chat_memory is None:
+        chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages=True)
+    
+    # Load memory first
+    memory_tmp = chat_memory.load_memory_variables({})["chat_memory"]
+    
+    # Convert to request format
+    chat_history = convert_messages(memory_tmp)
+    # chat_history.clear()
+    # chat_history.extend(convert_messages(memory_tmp))
+
+    # Avoid empty input
+    if message == "":
+        raise gr.Error("Please input a message")
+
+    # System Prompt and User Prompt
+    if system:
+        system_input = {
+            "role": "system",
+            "content": system
+        }
+        if chat_history == []:
+            chat_history.append(system_input)
+        else:
+            if chat_history == None:
+                chat_history = []
+                chat_history.append(system_input)
+            else:
+                chat_history.insert(0,system_input)
+ 
+    user_input = {
+        "role": "user",
+        "content": message
+    }
+
+    chat_history.append(user_input)
+
+    # Trim the context length first
+    if (len(chat_history)-1 > context_length) and len(chat_history)>3:
+        chat_history = [chat_history[0]]+chat_history[-context_length:]
+
+    if context_length == 0:
+        # If context_length == 0,clean up chat_history
+        response = openai.ChatCompletion.create(
+            engine=model_choice,
+            messages=[system_input,user_input],
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stop=None
+        )
+    else:
+        response = openai.ChatCompletion.create(
+            engine=model_choice,
+            messages=chat_history,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stop=None
+        )
+    reply = response.choices[0].message.content
+    chat_history_list.append([message,None])
+    chat_memory.save_context({"input": message},{"output": reply})
+
+    memory_tmp = chat_memory.load_memory_variables({})["chat_memory"]
+    chat_history = convert_messages(memory_tmp)
+    
+    return chat_history_list,message,chat_history
+
+def rst_mem(chat_his:list):
+    '''
+    Reset the chatbot memory(chat_his).
+    '''
+    chat_his = []
+    if chat_memory != None:
+        chat_memory.clear()
+    return chat_his
+
+# Manipulating Vector Databases
 def create_vectorstore(persist_vec_path:str):
     '''
     Create vectorstore.
@@ -85,7 +208,6 @@ def delete_flie_in_vectorstore(file_list,
     '''
     Get the file's ids first, then delete by vector IDs.
     '''
-
     # Specify the target file
     try:
         metadata = vectorstore.get()
@@ -165,6 +287,10 @@ def ask_file(file_ask_history_list:list,
     '''
     send splitted file to LLM
     '''
+    global chat_memory 
+    if chat_memory == None:
+        chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages=True)
+
     llm = AzureChatOpenAI(model=model_choice,
                     openai_api_type="azure",
                     deployment_name=model_choice, 
@@ -178,23 +304,36 @@ def ask_file(file_ask_history_list:list,
         if filter_type == "All":    
             # unselect file: retrieve whole knowledge base
             try:
-                qa = RetrievalQA.from_chain_type(llm=llm, chain_type=sum_type, 
-                                                    retriever=vectorstore.as_retriever(search_type="mmr"), 
-                                                    return_source_documents=True)
-                result = qa({"query": question_prompt})
+                chat_history_re = chat_memory.load_memory_variables({})['chat_memory']
+                qa = ConversationalRetrievalChain.from_llm(
+                                                            llm=llm,
+                                                            retriever=vectorstore.as_retriever(search_type="mmr"),
+                                                            chain_type=sum_type,
+                                                            verbose=True,
+                                                            return_source_documents=True,
+                                                        )
+                result = qa({"question": question_prompt,"chat_history": chat_history_re})
+                chat_memory.save_context({"input": result["question"]},{"output": result["answer"]})
             except (NameError):
                 raise gr.Error("You have not load kownledge base yet.")
         elif filter_type == "Selected file":
             # only selected one file
             # Retrieve the specified knowledge base with filter
-            qa = RetrievalQA.from_chain_type(llm=llm, chain_type=sum_type, 
-                                                retriever=vectorstore.as_retriever(search_type="mmr",search_kwargs={'filter': {"source":filter_goal[0]}}), 
-                                                return_source_documents=True)
+            chat_history_re = chat_memory.load_memory_variables({})['chat_memory']
+            qa = ConversationalRetrievalChain.from_llm(
+                                                        llm=llm,
+                                                        retriever=vectorstore.as_retriever(search_type="mmr",search_kwargs={"filter":{"source":filter_goal[0]}}),
+                                                        chain_type=sum_type,
+                                                        verbose=True,
+                                                        # memory=chat_memory,
+                                                        return_source_documents=True,
+                                                    )
             
             # get chain's result
-            result = qa({"query": question_prompt})
+            result = qa({"question": question_prompt,"chat_history": chat_history_re})
+            chat_memory.save_context({"input": result["question"]},{"output": result["answer"]})
 
-        usr_prob = result["query"]
+        usr_prob = result["question"]
     # if there is no file, let it become a common chat model
     else:
         gr.Info("You don't select your knowledge base, so the result is presented by base model.")

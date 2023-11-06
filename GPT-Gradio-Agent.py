@@ -33,82 +33,6 @@ set_theme = adjust_theme()
 
 # <---------- set environmental parameters --------->
 
-def deliver(message:str,
-            model_choice:str,
-            chat_history:list, 
-            chat_history_list:list,
-            system:str,
-            context_length:int, 
-            temperature:float,
-            max_tokens:int,
-            top_p:float,
-            frequency_penalty:float,
-            presence_penalty:float):
-    '''
-    Response function for chat-only
-    '''
-
-    # Avoid empty input
-    if message == "":
-        raise gr.Error("Please input a message")
-
-    # System Prompt and User Prompt
-    if system:
-        system_input = {
-            "role": "system",
-            "content": system
-        }
-        if chat_history == []:
-            chat_history.append(system_input)
-        else:
-            chat_history[0] = system_input
- 
-    user_input = {
-        "role": "user",
-        "content": message
-    }
-
-    chat_history.append(user_input)
-
-    if context_length == 0:
-        # If context_length == 0,clean up chat_history
-        response = openai.ChatCompletion.create(
-            engine=model_choice,
-            messages=[system_input,user_input],
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-            frequency_penalty=frequency_penalty,
-            presence_penalty=presence_penalty,
-            stop=None
-        )
-    else:
-        response = openai.ChatCompletion.create(
-            engine=model_choice,
-            messages=chat_history,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-            frequency_penalty=frequency_penalty,
-            presence_penalty=presence_penalty,
-            stop=None
-        )
-    reply = response.choices[0].message.content
-        
-    # GPT reply
-    chat_input = {
-        "role": "assistant",
-        "content": reply
-    }
-    chat_history.append(chat_input)
-    chat_history_list.append([message,None])
-
-    # Trim the context length first
-    if (len(chat_history)-1 > context_length) and len(chat_history)>3:
-        chat_history = [chat_history[0]]+chat_history[-context_length:]
-    
-    return chat_history_list,message,chat_history
-
 def stream(history_list:list,chat_history:list[dict]):
     '''
     Used to make LLM output looks like stream(Not real stream output).
@@ -154,7 +78,7 @@ def file_ask_stream(file_ask_history_list:list[list],file_answer:list):
     'file_ask_history_list' will be transfered to chatbot
     '''
     try:
-        bot_message = file_answer[0]["result"]
+        bot_message = file_answer[0]["answer"]
     except TypeError:
         raise gr.Error("No model response obtained")
     file_ask_history_list[-1][1] = ""
@@ -173,13 +97,6 @@ def sum_stream(summarize_result,chatbot):
         time.sleep(0.02)
         yield chatbot
 
-def rst_mem(chat_his:list):
-    '''
-    Reset the chatbot memory(chat_his).
-    '''
-    chat_his = []
-    return chat_his
-
 # <---------- GUI ---------->
 with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     gr.Markdown(
@@ -191,6 +108,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     )
     usr_msg = gr.State()
     chat_his = gr.State([])
+    # chat_memory = gr.State(ConversationBufferMemory(memory_key="chat_memory", return_messages=True))
     with gr.Row():
         with gr.Column(elem_id="history"):
             with gr.Row():
@@ -264,7 +182,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                         info="频率惩罚度：值越大，越不容易出现重复字词")
                             presence_penalty = gr.Slider(-2, 2, value=0, step=0.1, label="frequency_penalty",
                                                         info="话题新鲜度：值越大，越可能扩展到新的话题")
-            with gr.Tab("chatfiles"):
+            with gr.Tab("Chatfiles"):
                 split_tmp = gr.State(['0'])
                 sum_result = gr.State()
                 # set a element to aviod indexerror
@@ -302,8 +220,11 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                 value="All",
                                                 label="Search scope",
                                                 info="“All” means whole knowledge base;“Selected file” means the file selected in dropdown")
-                        sum_type = gr.Radio(choices=[("small file","stuff"),("large file","refine")],
-                                            value="stuff",
+                        sum_type = gr.Radio(choices=[("small file","stuff"),
+                                                     ("large file(refine)","refine"),
+                                                     ("large file(map reduce)","map_reduce"),
+                                                     ("large file(map rerank, for chat)","map_rerank")],
+                                            value="refine",
                                             label="File size type",
                                             info="也作用于“Summarize”。如果待总结字数较多，请选择“lagre size”（选“small size”可能导致超出 GPT 的最大 Token ）")
 
@@ -317,7 +238,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     output_param = [chat_bot, usr_msg, chat_his]
 
     # chatbot button event
-    message.submit(deliver,input_param, output_param, queue=False).then(stream,[chat_bot,chat_his],chat_bot)
+    message.submit(deliver,input_param, output_param, queue=False).success(stream,[chat_bot,chat_his],chat_bot)
     send.click(deliver,input_param, output_param, queue=False).success(stream,[chat_bot,chat_his],chat_bot)
     clear.click(rst_mem,inputs=chat_his,outputs=chat_his)
     # export_his.click(export_to_markdown,[chat_bot,chat_name])
