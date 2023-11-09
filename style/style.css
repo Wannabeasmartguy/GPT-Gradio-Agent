@@ -1,3 +1,8 @@
+:root {
+    --message-list-background-hover: #F3F3F3;
+    --message-list-background-selected: #EAEAEA;
+}
+
 #btn {
     background-color: #00aaff !important;
     color: #FFFFFF;
@@ -7,7 +12,7 @@
     cursor: pointer;
 }
 #btn_transparent {
-    background-color: #ffffff !important;
+    background-color: #609dff !important;
     width: 10;
     height: 10;
 }

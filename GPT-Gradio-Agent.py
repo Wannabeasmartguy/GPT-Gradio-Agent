@@ -128,12 +128,13 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                     elem_id="btn_transparent",
                     size="sm"
                 )
+            His_choice_cache = get_all_conversation_names()
             Historylist = gr.Radio(
                 #label="Dialog Box",
                 show_label=False,
                 interactive=True,
-                value=init_history_list()[0],
-                choices=init_history_list(),
+                value=list_vali_check(His_choice_cache),
+                choices=His_choice_cache,
                 elem_id="history-select-dropdown",
             )
         with gr.Column(scale=2):
@@ -143,9 +144,10 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                     label="Model",info="支持模型选择，立即生效")
                 chat_name = gr.Textbox(label="Chatbot name",
                                        interactive=True,
-                                       value=init_history_list()[0],
+                                       value=get_last_conversation_name(),
                                        info="对话名称将被用于导出聊天记录时的文件命名。")
             chat_bot = gr.Chatbot(height=500,
+                                  value=get_last_conversation_content(),
                                   show_label=False,
                                   show_copy_button=True,
                                   bubble_full_width=False)
@@ -182,7 +184,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                         info="频率惩罚度：值越大，越不容易出现重复字词")
                             presence_penalty = gr.Slider(-2, 2, value=0, step=0.1, label="frequency_penalty",
                                                         info="话题新鲜度：值越大，越可能扩展到新的话题")
-            with gr.Tab("Chatfiles"):
+            with gr.Tab("RAG"):
                 split_tmp = gr.State(['0'])
                 sum_result = gr.State()
                 # set a element to aviod indexerror
@@ -204,6 +206,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                         with gr.Row():
                             vector_content = gr.DataFrame(#label="Knowledge Base Document Catalog",
                                                           value = pd.DataFrame(columns=['文件名称']),
+                                                          visible=False,
                                                           interactive=False,
                                                          )
                             file_list = gr.Dropdown(interactive=True,
@@ -211,7 +214,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                     label="File list")
                         with gr.Column():
                             create_vec_but = gr.Button(value="Create a new knowledge base 📁")
-                            load_vec = gr.Button(value="Load your 📁 ")
+                            load_vec = gr.Button(value="Load your 📁 ",variant='primary',elem_id="btn")
                             with gr.Row():
                                 add_file = gr.Button(value="Add it (The file uploaded) to 📁")
                                 delete_file = gr.Button(value="Delete it (Selected in dropdown) from 📁")  
@@ -229,7 +232,47 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                             info="也作用于“Summarize”。如果待总结字数较多，请选择“lagre size”（选“small size”可能导致超出 GPT 的最大 Token ）")
 
     # Radio control
-    add_dialog.click(add_history_list,chat_name,Historylist)
+    add_dialog.click(add_conversation_to_json,
+                     inputs=[chat_name,chat_bot]
+                     ).success(lambda:gr.Radio(choices=get_all_conversation_names(),
+                                                value=get_last_conversation_name()),
+                                                outputs=Historylist
+                                ).success(lambda: gr.Chatbot(value=''), 
+                                          [],
+                                          [chat_bot]
+                                          ).success(lambda: gr.Textbox(value=get_last_conversation_name()), 
+                                                    [],
+                                                    [chat_name]
+                                                    )
+    
+    delete_dialog.click(delete_conversation_from_json,
+                        inputs=[chat_name]
+                        ).success(lambda: gr.Radio(choices=get_all_conversation_names(), 
+                                                   value=get_last_conversation_name()), 
+                                                   outputs=[Historylist] 
+                                  ).success(get_last_conversation_content,
+                                            [],
+                                            [chat_bot]).success(lambda Historylist:gr.Textbox(value=Historylist),
+                                                                [Historylist],
+                                                                [chat_name])
+    
+    Historylist.select(lambda:gr.Radio(),[],[Historylist]
+                       ).success(lambda Historylist: gr.Textbox(value=Historylist),
+                                 [Historylist],[chat_name]
+                                 ).success(get_selected_conversation_content,
+                                           [chat_name],
+                                           [chat_bot])
+
+    chat_name.blur(modify_conversation_name,
+                   inputs=[Historylist,chat_name],
+                   outputs=[chat_name]).success(lambda chat_name: gr.Radio(
+                                                                    show_label=False,
+                                                                    interactive=True,
+                                                                    value=chat_name,
+                                                                    choices=get_all_conversation_names(),
+                                                                    ),
+                                                            inputs=chat_name,outputs=[Historylist]
+                                                )
 
     # Merge all handles that require input and output.
     input_param = [message, model_choice, chat_his, chat_bot, System_Prompt, 
@@ -238,9 +281,29 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     output_param = [chat_bot, usr_msg, chat_his]
 
     # chatbot button event
-    message.submit(deliver,input_param, output_param, queue=False).success(stream,[chat_bot,chat_his],chat_bot)
-    send.click(deliver,input_param, output_param, queue=False).success(stream,[chat_bot,chat_his],chat_bot)
-    clear.click(rst_mem,inputs=chat_his,outputs=chat_his)
+    message.submit(deliver,
+                   input_param, 
+                   output_param, 
+                   queue=False
+                   ).success(stream,
+                             [chat_bot,chat_his]
+                             ,chat_bot
+                             ).success(update_conversation_to_json,
+                                       [chat_name,chat_bot])
+    send.click(deliver,
+               input_param, 
+               output_param, 
+               queue=False
+               ).success(stream,
+                         [chat_bot,chat_his],
+                         chat_bot
+                         ).success(update_conversation_to_json,
+                                   [chat_name,chat_bot])
+    clear.click(rst_mem,
+                inputs=chat_his,
+                outputs=chat_his
+                ).success(update_conversation_to_json,
+                          [chat_name,chat_bot])
     # export_his.click(export_to_markdown,[chat_bot,chat_name])
 
     message.submit(lambda: gr.Textbox(value=''), [],[message])
@@ -250,8 +313,23 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full").then(cal_token_cost,[split_tmp],[estimate_cost])
     file.clear(lambda:gr.Textbox(value=''),[],[estimate_cost])
     refresh_file_cost.click(lambda:gr.Text(),[],[estimate_cost]).then(lambda:gr.File(),[],[file]).then(lambda:gr.Text(),[],[estimate_cost])
-    chat_with_file.click(ask_file,inputs=[chat_bot,message,file_answer,model_choice,sum_type,vector_path,file_list,filter_choice],outputs=[chat_bot,file_answer]).then(file_ask_stream,[chat_bot,file_answer],[chat_bot])
-    summarize.click(summarize_file,inputs=[split_tmp,chat_bot,model_choice,sum_type],outputs=[sum_result,chat_bot]).then(sum_stream,[sum_result,chat_bot],[chat_bot])
+    chat_with_file.click(ask_file,
+                         inputs=[chat_bot,message,file_answer,model_choice,
+                                 sum_type,vector_path,file_list,filter_choice],
+                         outputs=[chat_bot,file_answer]
+                         ).then(file_ask_stream,
+                                [chat_bot,file_answer],
+                                [chat_bot]
+                                ).success(update_conversation_to_json,
+                                          [chat_name,chat_bot])
+    summarize.click(summarize_file,
+                    inputs=[split_tmp,chat_bot,model_choice,sum_type],
+                    outputs=[sum_result,chat_bot]
+                    ).then(sum_stream,
+                           [sum_result,chat_bot],
+                           [chat_bot]
+                           ).success(update_conversation_to_json,
+                                     [chat_name,chat_bot])
 
     chat_with_file.click(lambda: gr.Textbox(value=''), [],[message])
     summarize.click(lambda: gr.Textbox(value=''), [],[message])

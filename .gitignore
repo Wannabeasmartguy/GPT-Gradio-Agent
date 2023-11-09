@@ -1,6 +1,7 @@
 # Notebook
 /gga-Notebook
 /.vscode
+/chat_cache.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
