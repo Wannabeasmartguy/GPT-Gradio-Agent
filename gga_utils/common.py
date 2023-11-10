@@ -182,16 +182,8 @@ def add_conversation_to_json(name:str, conversation:list[list]):
     # 将对话名称和对话内容添加到字典中
     data[name] = conversation
 
-    # 将更新后的字典转换为 JSON 格式
-    json_data = json.dumps(data, ensure_ascii=False, indent=4)
-
-    # 将 JSON 数据写入文件
-    with open(filename, 'w', encoding='GBK') as file:
-        file.write(json_data)
-
     # 创建一个空的新对话以刷新界面
     new = "New chat"
-    data[new] = []
 
     # 检查是否存在相同的键
     if new in data:
@@ -201,8 +193,10 @@ def add_conversation_to_json(name:str, conversation:list[list]):
         while new_key in data:
             i += 1
             new_key = f"{new}({i})"
-    
-    data[new_key] = data.pop(new)
+        data[new_key] = []
+    else:
+        data[new] = []
+
     # 将更新后的字典转换为 JSON 格式
     json_data = json.dumps(data, ensure_ascii=False, indent=4)
 
