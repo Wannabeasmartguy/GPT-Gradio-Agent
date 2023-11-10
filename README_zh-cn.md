@@ -1,5 +1,3 @@
-# GPT-Gradio-Agent、
-
 **中文文档** | [English](README.md)
 
 使用 Azure OpenAI API（或 OpenAI API）和 Gradio 构建自己的 GPT 助手并管理 GPT 驱动的知识库！
@@ -9,7 +7,7 @@
 
 这是基本的聊天框界面，你可以在其中直接与GPT进行对话，通过系统提示让他们扮演专家的角色并回答您的问题,并管理你的多个对话。
 
-![英文参数](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/e24645f6-ee92-4d2e-9565-805e21250546)
+![chat界面 v0 7](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/f0ec31dc-6cdf-42db-9f8c-4dceae9dabca)
 
 ## GPT 驱动的知识库
 
@@ -17,7 +15,7 @@
 
 > 不用一行行地在文件里找内容真是太高效了！
 
-![chatfile界面](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/b04c6ccc-8ed7-4d99-8831-fde912ea6fcd)
+![v0 7 RAG 界面](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/705c8f58-d46b-487a-b4d5-9cc38397397f)
 
 # 快速开始
 
