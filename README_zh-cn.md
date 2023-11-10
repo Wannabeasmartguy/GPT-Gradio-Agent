@@ -7,15 +7,15 @@
 
 ## 基本聊天框界面
 
-这是基本的聊天框界面，你可以在其中直接与GPT进行对话，并通过系统提示让他们扮演专家的角色并回答您的问题。
+这是基本的聊天框界面，你可以在其中直接与GPT进行对话，通过系统提示让他们扮演专家的角色并回答您的问题,并管理你的多个对话。
 
 ![英文参数](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/e24645f6-ee92-4d2e-9565-805e21250546)
 
 ## GPT 驱动的知识库
 
-在此界面中，您可以**创建和管理自己的知识库**（CRUD），并**让 GPT 结合**指定的文档（或**整个知识库**）回答您的问题。
+在此界面中，您可以**创建和管理自己的知识库**（CRUD），并**让 GPT 结合**指定的文档（或**整个知识库**）回答您的问题，实现 RAG （检索增强生成）。
 
-> 不用一行行地找真是太高效了！
+> 不用一行行地在文件里找内容真是太高效了！
 
 ![chatfile界面](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/b04c6ccc-8ed7-4d99-8831-fde912ea6fcd)
 
@@ -32,14 +32,14 @@
   > `OPENAI_API_KEY`：Azure OpenAI 的 api key；  
   > `OPENAI_API_BASE`：Azure OpenAI 的提供的“终结点”
 
-1. 尽情享受吧！  
+3. 尽情享受吧！  
    在终端输入`python GPT-Gradio-Agent.py` 以运行代码。在终端内你可以看到本地 URL，它一般是 http://127.0.0.1:7860。
 
 ## Release 下载便携包
 
 如果你没有安装 Git ，可以在 [release](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/releases) 页面下载最新代码。
 
-解压后，按照上面的**步骤 1 和步骤 2** 配置环境，最后**双击`run.bat`**运行代码。
+解压后，按照上面 **GIT** 的**步骤 1 和步骤 2** 配置环境，最后**双击`run.bat`**运行代码。
 
 ## 开发计划
 
@@ -53,7 +53,9 @@
 
 - [x] 模型选择
 
-- [x] 支持与文件对话
+- [x] 对话管理 
+
+- [x] 检索增强生成（RAG）
   
   - [x] 单文件对话
   

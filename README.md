@@ -8,12 +8,13 @@ Build your own GPT Agent and manage your GPT-driven knowledge base with Azure Op
 
 ## Basic Chatbox Interface
 
-This is the basic Chatbox, where you can have a conversation with GPT and have them play the role of an expert to answer your questions through System Prompt.
+This is the basic chatbox interface where you can have a conversation directly with GPT, let them play the role of an expert and answer your questions with system prompts, and manage your multiple conversations.
+
 ![英文参数](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/e24645f6-ee92-4d2e-9565-805e21250546)
 
 ## GPT-driven knowledge base
 
-In this interface, you can **create and manage your own knowledge base** (CRUD) and **have GPT answer your questions** in conjunction with **specified documents** (or the **entire knowledge base**). 
+In this interface, you can **create and manage your own Knowledge Base** (CRUD) and **have GPT answer your questions in conjunction with **specified documents** (or **the entire Knowledge Base**), enabling RAG (Retrieval Augmented Generation)
 
 Very efficient!
 
@@ -56,7 +57,9 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
 
 - [x] Choose models
 
-- [ ] Chat with document
+- [x] Dialogue management
+
+- [x] RAG(Retrieval Augmented Generation)
 
   - [x] Chat with single file
   
