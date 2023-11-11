@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 import pandas
 from vecstore.vecstore import * 
+from vecstore.Agent import *
 from gga_utils.common import *
 from gga_utils.theme import *
 
@@ -150,7 +151,8 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                   value=get_last_conversation_content(),
                                   show_label=False,
                                   show_copy_button=True,
-                                  bubble_full_width=False)
+                                  bubble_full_width=False,
+                                  render_markdown=True,)
             with gr.Row():
                 message = gr.Textbox(label="Input your prompt",
                                      info="'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.",
@@ -230,6 +232,14 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                             value="refine",
                                             label="File size type",
                                             info="也作用于“Summarize”。如果待总结字数较多，请选择“lagre size”（选“small size”可能导致超出 GPT 的最大 Token ）")
+            with gr.Tab("Agent"):
+                with gr.Tab("Web Summary"):
+                    sum_url = gr.Textbox(label="URL",
+                                         info="Paste the link to the page you want to summarize here.")
+                    sum_url_button = gr.Button(value="Summarize URL",
+                                               variant='primary',
+                                               elem_id="btn",
+                                               scale=2)
 
     # Radio control
     add_dialog.click(add_conversation_to_json,
@@ -340,6 +350,12 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     #file_list.change(refresh_file_list,inputs=[vector_content],outputs=file_list)
     add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp,file],outputs=[vector_content,file_list]).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
     delete_file.click(delete_flie_in_vectorstore,inputs=file_list).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
+
+    # Agent button event
+    sum_url_button.click(sum_chain,
+                         inputs=[model_choice,sum_url,chat_bot],
+                         outputs=[chat_bot]).success(update_conversation_to_json,
+                                                      [chat_name,chat_bot])
 
 demo.queue().launch(inbrowser=True,debug=True,show_api=False
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"

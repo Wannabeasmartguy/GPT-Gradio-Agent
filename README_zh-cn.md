@@ -28,11 +28,14 @@
 
 1. 获取[Azure OpenAI API Key](https://portal.azure.com/#home);
 
+> 模型的**部署名称**，**一定要**和模型的原名称相同！
+> 比如部署 `'gpt-35-turbo'` 时，模型的部署名称也要填 `'gpt-35-turbo'`
+
 2. 复制 `.env_example`并重命名为`.env`，修改环境变量`OPENAI_API_KEY`和`OPENAI_API_BASE`;  
   > `OPENAI_API_KEY`：Azure OpenAI 的 api key；  
   > `OPENAI_API_BASE`：Azure OpenAI 的提供的“终结点”
 
-3. 尽情享受吧！  
+1. 尽情享受吧！  
    在终端输入`python GPT-Gradio-Agent.py` 以运行代码。在终端内你可以看到本地 URL，它一般是 http://127.0.0.1:7860。
 
 ## Release 下载便携包

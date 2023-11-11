@@ -30,11 +30,14 @@ Then open a **Command Prompt (CMD)** in the folder where the codes are stored, a
 
 1. Get [Azure OpenAI API Key](https://portal.azure.com/#home);
 
+> The model **deployment name** **MUST** be the **same** as the **model name**!
+> For example, when deploying `'gpt-35-turbo'`, the deployment name of the model should also be `'gpt-35-turbo'`.
+
 2. Rename `.env_example` to `.env`. Change the environment variable:  `OPENAI_API_KEY` and `OPENAI_API_BASE`;  
   > `OPENAI_API_KEY`：Azure OpenAI key;  
   > `OPENAI_API_BASE`：Access key provided by Azure OpenAI.
 
-3. Enjoy it!  
+1. Enjoy it!  
   Use `python GPT-Gradio-Agent.py` in your terminal to run the the codes.You can see the URL in your terminal, and the default local URL is http://127.0.0.1:7860.
 
 ## Release package 
