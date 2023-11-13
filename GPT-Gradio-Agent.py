@@ -4,10 +4,13 @@ import time
 import os
 from dotenv import load_dotenv
 import pandas
+
+# Customized Modules
 from vecstore.vecstore import * 
 from vecstore.Agent import *
 from gga_utils.common import *
 from gga_utils.theme import *
+from vecstore.template import *
 
 # import langchain to chat with file
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -138,21 +141,21 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                 choices=His_choice_cache,
                 elem_id="history-select-dropdown",
             )
-        with gr.Column(scale=2):
-            with gr.Group():
-                model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4"],
+        with gr.Column(scale=6):
+            model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4"],
                                     value="gpt-35-turbo",
                                     label="Model",info="支持模型选择，立即生效")
+            with gr.Group():
                 chat_name = gr.Textbox(label="Chatbot name",
-                                       interactive=True,
-                                       value=get_last_conversation_name(),
-                                       info="对话名称将被用于导出聊天记录时的文件命名。")
-            chat_bot = gr.Chatbot(height=500,
-                                  value=get_last_conversation_content(),
-                                  show_label=False,
-                                  show_copy_button=True,
-                                  bubble_full_width=False,
-                                  render_markdown=True,)
+                                        interactive=True,
+                                        value=get_last_conversation_name(),
+                                        info="对话名称将被用于导出聊天记录时的文件命名。")
+                chat_bot = gr.Chatbot(height=500,
+                                    value=get_last_conversation_content(),
+                                    show_label=False,
+                                    show_copy_button=True,
+                                    bubble_full_width=False,
+                                    render_markdown=True,)
             with gr.Row():
                 message = gr.Textbox(label="Input your prompt",
                                      info="'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.",
@@ -233,13 +236,19 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                             label="File size type",
                                             info="也作用于“Summarize”。如果待总结字数较多，请选择“lagre size”（选“small size”可能导致超出 GPT 的最大 Token ）")
             with gr.Tab("Agent"):
-                with gr.Tab("Web Summary"):
-                    sum_url = gr.Textbox(label="URL",
-                                         info="Paste the link to the page you want to summarize here.")
-                    sum_url_button = gr.Button(value="Summarize URL",
+                with gr.Tab("Web Request"):
+                    sum_url = gr.Textbox(label="URL(网址)",
+                                         info="Paste the link to the page you want to request here.在这里粘贴链接（即 Prompt Template 中的变量 requests_result）")
+                    web_template = gr.Textbox(label="Prompt Template(提示词模版)",
+                                              info="Input the template you want to use here.")
+                    sum_url_button = gr.Button(value="Request URL",
                                                variant='primary',
                                                elem_id="btn",
                                                scale=2)
+                    template_example = gr.Examples([sum_wechat_gzh,
+                                                    sina_test],
+                                                    inputs=[web_template],
+                                                    )
 
     # Radio control
     add_dialog.click(add_conversation_to_json,
@@ -314,7 +323,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                 outputs=chat_his
                 ).success(update_conversation_to_json,
                           [chat_name,chat_bot])
-    # export_his.click(export_to_markdown,[chat_bot,chat_name])
+    export_his.click(export_to_markdown,[chat_bot,chat_name])
 
     message.submit(lambda: gr.Textbox(value=''), [],[message])
     send.click(lambda: gr.Textbox(value=''), [],[message])
@@ -352,8 +361,8 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     delete_file.click(delete_flie_in_vectorstore,inputs=file_list).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
 
     # Agent button event
-    sum_url_button.click(sum_chain,
-                         inputs=[model_choice,sum_url,chat_bot],
+    sum_url_button.click(url_request_chain,
+                         inputs=[model_choice,sum_url,chat_bot,web_template],
                          outputs=[chat_bot]).success(update_conversation_to_json,
                                                       [chat_name,chat_bot])
 
