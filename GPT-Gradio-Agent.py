@@ -118,13 +118,6 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     with gr.Row():
         with gr.Column(elem_id="history"):
             with gr.Row():
-                delete_dialog = gr.Button(
-                    icon=r"icon\delete_dialog.png",
-                    value=i18n("Delete Dialog"),
-                    min_width=5,
-                    elem_id="btn_transparent",
-                    size="sm",
-                )
                 add_dialog = gr.ClearButton(
                     components=[chat_his],
                     icon=r"icon\add_dialog.png",
@@ -133,6 +126,13 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                     min_width=5,
                     elem_id="btn_transparent",
                     size="sm"
+                )
+                delete_dialog = gr.Button(
+                    icon=r"icon\delete_dialog.png",
+                    value=i18n("Delete Dialog"),
+                    min_width=5,
+                    elem_id="btn_transparent",
+                    size="sm",
                 )
             His_choice_cache = get_all_conversation_names()
             Historylist = gr.Radio(
