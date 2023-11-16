@@ -3,6 +3,9 @@
     --message-list-background-selected: #EAEAEA;
 }
 
+#Accordion {
+    background-color: #eff6ff;
+}
 #btn {
     background-color: #00aaff !important;
     color: #FFFFFF;

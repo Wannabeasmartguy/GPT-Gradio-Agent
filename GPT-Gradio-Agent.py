@@ -35,6 +35,8 @@ set_theme = adjust_theme()
 
 #gr.Chatbot.postprocess = format_io
 
+# Initialize language
+i18n = I18nAuto()  
 # <---------- set environmental parameters --------->
 
 def stream(history_list:list,chat_history:list[dict]):
@@ -118,7 +120,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
             with gr.Row():
                 delete_dialog = gr.Button(
                     icon=r"icon\delete_dialog.png",
-                    value="Delete Dialog",
+                    value=i18n("Delete Dialog"),
                     min_width=5,
                     elem_id="btn_transparent",
                     size="sm",
@@ -127,7 +129,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                     components=[chat_his],
                     icon=r"icon\add_dialog.png",
                     #variant="primary",
-                    value="New Dialog",
+                    value=i18n("New Dialog"),
                     min_width=5,
                     elem_id="btn_transparent",
                     size="sm"
@@ -141,15 +143,16 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                 choices=His_choice_cache,
                 elem_id="history-select-dropdown",
             )
-        with gr.Column(scale=6):
-            model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4"],
+        with gr.Column(scale=4):
+            model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4","gpt-4-32k"],
                                     value="gpt-35-turbo",
-                                    label="Model",info="支持模型选择，立即生效")
+                                    label=i18n("Model"),
+                                    info=i18n("Model info"),)
             with gr.Group():
-                chat_name = gr.Textbox(label="Chatbot name",
+                chat_name = gr.Textbox(label=i18n("Chatbot name"),
                                         interactive=True,
                                         value=get_last_conversation_name(),
-                                        info="对话名称将被用于导出聊天记录时的文件命名。")
+                                        info=i18n("Chatbot info"))
                 chat_bot = gr.Chatbot(height=500,
                                     value=get_last_conversation_content(),
                                     show_label=False,
@@ -157,38 +160,40 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                     bubble_full_width=False,
                                     render_markdown=True,)
             with gr.Row():
-                message = gr.Textbox(label="Input your prompt",
-                                     info="'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.",
+                message = gr.Textbox(label=i18n("Input your prompt"),
+                                     info=i18n("'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM."),
                                      scale=7)
-                export_his = gr.Button(value="Export Chat History",scale=1)
+                export_his = gr.Button(value=i18n("Export Chat History"),scale=1)
             with gr.Row():
                 clear = gr.ClearButton([message, chat_bot,chat_his],scale=1,size="sm")
-                send = gr.Button("Send",variant='primary',elem_id="btn",scale=2)
+                send = gr.Button(i18n("Send"),variant='primary',elem_id="btn",scale=2)
             with gr.Row():
-                chat_with_file = gr.Button(value="Chat with file (Valid for 📁)")
-                summarize = gr.Button(value="Summarize (Valid only for uploaded file)")
+                chat_with_file = gr.Button(value=i18n("Chat with file (Valid for 📁)"))
+                summarize = gr.Button(value=i18n("Summarize (Valid only for uploaded file)"))
 
         with gr.Column():
-            with gr.Tab("Chat"):
+            with gr.Tab(i18n("Chat")):
                 with gr.Row():
                     with gr.Column():
-                        with gr.Accordion("Commom Setting"):
-                            System_Prompt = gr.Textbox("You are a helpful AI.", label="System Prompt",
-                                                    info="'Shift + Enter' to begin an new line.")
-                            Context_length = gr.Slider(0, 32, value=4, step=1, label="Context length",
-                                                    info="每次请求携带的历史消息数")                    
+                        with gr.Accordion(i18n("Commom Setting"),
+                                          elem_id="Accordion"):
+                            System_Prompt = gr.Textbox("You are a helpful AI.", label=i18n("System Prompt"),
+                                                    info=i18n("'Shift + Enter' to begin an new line."))
+                            Context_length = gr.Slider(0, 32, value=4, step=1, label=i18n("Context length"),
+                                                    info=i18n("The number of historical messages carried per request"))                    
             
-                        with gr.Accordion("Additional Setting"):
+                        with gr.Accordion(i18n("Additional Setting"),
+                                          elem_id="Accordion"):
                             max_tokens = gr.Slider(0, 4096, value=400, step=1, label="max_tokens",
-                                                info="携带上下文交互的最大 token 数")
+                                                info=i18n("Maximum number of tokens carrying context interactions"))
                             Temperature = gr.Slider(0, 2, value=0.5, step=0.1, label="Temperature",
-                                                    info="随机性：值越大，回复越随机")
+                                                    info=i18n("Randomness: the larger the value, the more random the response is"))
                             top_p = gr.Slider(0, 1, value=1, step=0.1, label="top_p",
-                                            info="核采样：与随机性类似，但不要与随机性一起修改")
-                            frequency_penalty = gr.Slider(-2, 2, value=0, step=0.1, label="frequency_penalty",
-                                                        info="频率惩罚度：值越大，越不容易出现重复字词")
-                            presence_penalty = gr.Slider(-2, 2, value=0, step=0.1, label="frequency_penalty",
-                                                        info="话题新鲜度：值越大，越可能扩展到新的话题")
+                                            info=i18n("Nuclear sampling: Similar to randomness, but not modified with randomness"))
+                            frequency_penalty = gr.Slider(-2, 2, value=0, step=0.1, label=i18n("frequency_penalty"),
+                                                        info=i18n("Frequency penalty: the larger the value, the less likely it is to be a repeated word"))
+                            presence_penalty = gr.Slider(-2, 2, value=0, step=0.1, label=i18n("presence_penalty"),
+                                                        info=i18n("Topic freshness: the larger the value, the more likely it is to expand to new topics"))
             with gr.Tab("RAG"):
                 split_tmp = gr.State(['0'])
                 sum_result = gr.State()
@@ -196,52 +201,61 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                 file_answer = gr.State(['0']) 
                 
                 with gr.Column():
-                    with gr.Group():
-                        file = gr.File(label="The file you want to chat with")
-                        with gr.Row():
-                            estimate_cost = gr.Text(label="Estimated cost:", 
-                                                    info="Estimated cost of embed file",
-                                                    scale=2)
-                            refresh_file_cost = gr.Button(value="Refresh file and estimate cost",
-                                                          scale=1)
-
-                    with gr.Group():
-                        vector_path = gr.Text(label="Knowledge base save path",
-                                            info="Choose the folder you want to save, and PASTE THE ABSOLUTE PATH here")
-                        with gr.Row():
-                            vector_content = gr.DataFrame(#label="Knowledge Base Document Catalog",
-                                                          value = pd.DataFrame(columns=['文件名称']),
-                                                          visible=False,
-                                                          interactive=False,
-                                                         )
-                            file_list = gr.Dropdown(interactive=True,
-                                                    # allow_custom_value=True,
-                                                    label="File list")
-                        with gr.Column():
-                            create_vec_but = gr.Button(value="Create a new knowledge base 📁")
-                            load_vec = gr.Button(value="Load your 📁 ",variant='primary',elem_id="btn")
+                    with gr.Accordion(label=i18n("RAG Basic Operation"),
+                                      elem_id="Accordion"):
+                        with gr.Group():
+                            vector_path = gr.Text(label=i18n("Knowledge base save path"),
+                                                info=i18n("Choose the folder you want to save, and PASTE THE ABSOLUTE PATH here"))
                             with gr.Row():
-                                add_file = gr.Button(value="Add it (The file uploaded) to 📁")
-                                delete_file = gr.Button(value="Delete it (Selected in dropdown) from 📁")  
-                    with gr.Accordion("File chat setting"):
+                                vector_content = gr.DataFrame(#label="Knowledge Base Document Catalog",
+                                                            value = pd.DataFrame(columns=['文件名称']),
+                                                            visible=False,
+                                                            interactive=False,
+                                                            )
+                                file_list = gr.Dropdown(interactive=True,
+                                                        # allow_custom_value=True,
+                                                        label=i18n("File list"))
+                        with gr.Group():
+                            file = gr.File(label=i18n("The file you want to chat with"),
+                                        file_types=[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml",# Plaintext
+                                                    # ".jpeg", ".png",# images
+                                                    ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"# Documents
+                                                    ],
+                                        height=150)
+                            with gr.Row():
+                                estimate_cost = gr.Text(label=i18n("Estimated cost:"), 
+                                                        info=i18n("Estimated cost of embed file"),
+                                                        scale=2)
+                                refresh_file_cost = gr.Button(value=i18n("Refresh file and estimate cost"),
+                                                            scale=1)
+                        with gr.Column():
+                            create_vec_but = gr.Button(value=i18n("Create a new knowledge base 📁"))
+                            load_vec = gr.Button(value=i18n("Load your 📁 "),variant='primary',elem_id="btn")
+                            with gr.Row():
+                                add_file = gr.Button(value=i18n("Add it (The file uploaded) to 📁"),
+                                                    scale=1)
+                                delete_file = gr.Button(value=i18n("Delete it (Selected in dropdown) from 📁"),
+                                                        scale=1)  
+                    with gr.Accordion(i18n("File chat setting"),
+                                      elem_id="Accordion"):
                         filter_choice = gr.Radio(choices=["All", "Selected file"],
                                                 value="All",
-                                                label="Search scope",
-                                                info="“All” means whole knowledge base;“Selected file” means the file selected in dropdown")
-                        sum_type = gr.Radio(choices=[("small file","stuff"),
-                                                     ("large file(refine)","refine"),
-                                                     ("large file(map reduce)","map_reduce"),
-                                                     ("large file(map rerank, for chat)","map_rerank")],
+                                                label=i18n("Search scope"),
+                                                info=i18n("“All” means whole knowledge base;“Selected file” means the file selected in dropdown"))
+                        sum_type = gr.Radio(choices=[(i18n("small file"),"stuff"),
+                                                     (i18n("large file(refine)"),"refine"),
+                                                     (i18n("large file(map reduce)"),"map_reduce"),
+                                                     (i18n("large file(map rerank, for chat)"),"map_rerank")],
                                             value="refine",
-                                            label="File size type",
-                                            info="也作用于“Summarize”。如果待总结字数较多，请选择“lagre size”（选“small size”可能导致超出 GPT 的最大 Token ）")
+                                            label=i18n("File size type"),
+                                            info=i18n("Also works for 'Summarize'. If the number of words to be summarized is large, select 'lagre size' (selecting 'small size' may result in exceeding the GPT's maximum Token)."))
             with gr.Tab("Agent"):
-                with gr.Tab("Web Request"):
-                    sum_url = gr.Textbox(label="URL(网址)",
-                                         info="Paste the link to the page you want to request here.在这里粘贴链接（即 Prompt Template 中的变量 requests_result）")
-                    web_template = gr.Textbox(label="Prompt Template(提示词模版)",
-                                              info="Input the template you want to use here.")
-                    sum_url_button = gr.Button(value="Request URL",
+                with gr.Tab(i18n("Web Request")):
+                    sum_url = gr.Textbox(label=i18n("URL"),
+                                         info=i18n("Paste the link to the page you want to request here."))
+                    web_template = gr.Textbox(label=i18n("Prompt Template"),
+                                              info=i18n("Input the template you want to use here."))
+                    sum_url_button = gr.Button(value=i18n("Request URL"),
                                                variant='primary',
                                                elem_id="btn",
                                                scale=2)
