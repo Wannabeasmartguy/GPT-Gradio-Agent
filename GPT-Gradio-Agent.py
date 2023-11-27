@@ -70,7 +70,7 @@ def upload_file(file_obj,
         raise gr.Error("File upload failed. This may be due to formatting issues (non-standard formats)")
 
     # initialize splitter
-    text_splitter = CharacterTextSplitter(chunk_size=150, chunk_overlap=10)
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=30)
     split_docs = text_splitter.split_documents(document)
     split_tmp.append(split_docs)
     progress(1, desc="Dealing...")
@@ -204,18 +204,6 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                     with gr.Accordion(label=i18n("RAG Basic Operation"),
                                       elem_id="Accordion"):
                         with gr.Group():
-                            vector_path = gr.Text(label=i18n("Knowledge base save path"),
-                                                info=i18n("Choose the folder you want to save, and PASTE THE ABSOLUTE PATH here"))
-                            with gr.Row():
-                                vector_content = gr.DataFrame(#label="Knowledge Base Document Catalog",
-                                                            value = pd.DataFrame(columns=['文件名称']),
-                                                            visible=False,
-                                                            interactive=False,
-                                                            )
-                                file_list = gr.Dropdown(interactive=True,
-                                                        # allow_custom_value=True,
-                                                        label=i18n("File list"))
-                        with gr.Group():
                             file = gr.File(label=i18n("The file you want to chat with"),
                                         file_types=[".eml", ".html", ".json", ".md", ".msg", ".rst", ".rtf", ".txt", ".xml",# Plaintext
                                                     # ".jpeg", ".png",# images
@@ -228,6 +216,18 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                         scale=2)
                                 refresh_file_cost = gr.Button(value=i18n("Refresh file and estimate cost"),
                                                             scale=1)
+                        with gr.Group():
+                            vector_path = gr.Text(label=i18n("Knowledge base save path"),
+                                                info=i18n("Choose the folder you want to save, and PASTE THE ABSOLUTE PATH here"))
+                            with gr.Row():
+                                vector_content = gr.DataFrame(#label="Knowledge Base Document Catalog",
+                                                            value = pd.DataFrame(columns=['文件名称']),
+                                                            visible=False,
+                                                            interactive=False,
+                                                            )
+                                file_list = gr.Dropdown(interactive=True,
+                                                        # allow_custom_value=True,
+                                                        label=i18n("File list"))
                         with gr.Column():
                             create_vec_but = gr.Button(value=i18n("Create a new knowledge base 📁"))
                             load_vec = gr.Button(value=i18n("Load your 📁 "),variant='primary',elem_id="btn")

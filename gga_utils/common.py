@@ -118,7 +118,7 @@ def get_all_conversation_names():
     # 检查 JSON 文件是否存在
     if os.path.isfile(filename):
         # 如果文件存在，则读取文件内容并解析为字典
-        with open(filename, 'r', encoding='GBK') as file:
+        with open(filename, 'r', encoding='gb18030') as file:
             data = json.load(file)
         
         # 获取所有对话名称并添加到列表中
@@ -138,7 +138,7 @@ def get_last_conversation_content():
     # 检查 JSON 文件是否存在
     if os.path.isfile(filename):
         # 如果文件存在，则读取文件内容并解析为字典
-        with open(filename, 'r', encoding='GBK') as file:
+        with open(filename, 'r', encoding='gb18030') as file:
             data = json.load(file)
         
         # 获取最后一个对话的内容
@@ -159,7 +159,7 @@ def get_last_conversation_name():
     # 检查 JSON 文件是否存在
     if os.path.isfile(filename):
         # 如果文件存在，则读取文件内容并解析为字典
-        with open(filename, 'r', encoding='GBK') as file:
+        with open(filename, 'r', encoding='gb18030') as file:
             data = json.load(file)
         
         # 获取最后一个对话的内容
@@ -171,7 +171,7 @@ def get_last_conversation_name():
             "New chat(1)": []
         }
         # 将新的字典转换为 JSON 格式并写入文件
-        with open(filename, 'w', encoding='GBK') as file:
+        with open(filename, 'w', encoding='gb18030') as file:
             json.dump(data, file, ensure_ascii=False, indent=4)
         last_name = list(data.keys())[-1]
         return last_name
@@ -185,7 +185,7 @@ def get_selected_conversation_content(name:str):
     # 检查 JSON 文件是否存在
     if os.path.isfile(filename):
         # 如果文件存在，则读取文件内容并解析为字典
-        with open(filename, 'r', encoding='GBK') as file:
+        with open(filename, 'r', encoding='gb18030') as file:
             data = json.load(file)
         
         # 获取指定对话的内容
@@ -204,7 +204,7 @@ def add_conversation_to_json(name:str, conversation:list[list]):
     # 检查 JSON 文件是否存在
     if os.path.isfile(filename):
         # 如果文件已存在，则读取文件内容并解析为字典
-        with open(filename, 'r', encoding='GBK') as file:
+        with open(filename, 'r', encoding='gb18030') as file:
             data = json.load(file)
     else:
         # 如果文件不存在，则创建一个新的字典
@@ -232,7 +232,7 @@ def add_conversation_to_json(name:str, conversation:list[list]):
     json_data = json.dumps(data, ensure_ascii=False, indent=4)
 
     # 将 JSON 数据写入文件
-    with open(filename, 'w', encoding='GBK') as file:
+    with open(filename, 'w', encoding='gb18030') as file:
         file.write(json_data)
 
 def update_conversation_to_json(name:str, conversation:list[list]):
@@ -244,7 +244,7 @@ def update_conversation_to_json(name:str, conversation:list[list]):
     # 检查 JSON 文件是否存在
     if os.path.isfile(filename):
         # 如果文件已存在，则读取文件内容并解析为字典
-        with open(filename, 'r', encoding='GBK') as file:
+        with open(filename, 'r', encoding='gb18030') as file:
             data = json.load(file)
     else:
         # 如果文件不存在，则创建一个新的字典
@@ -257,7 +257,7 @@ def update_conversation_to_json(name:str, conversation:list[list]):
     json_data = json.dumps(data, ensure_ascii=False, indent=4)
 
     # 将 JSON 数据写入文件
-    with open(filename, 'w', encoding='GBK') as file:
+    with open(filename, 'w', encoding='gb18030') as file:
         file.write(json_data)
 
 def delete_conversation_from_json(name):
@@ -266,7 +266,7 @@ def delete_conversation_from_json(name):
     # 检查 JSON 文件是否存在
     if os.path.isfile(filename):
         # 如果文件存在，则读取文件内容并解析为字典
-        with open(filename, 'r', encoding='GBK') as file:
+        with open(filename, 'r', encoding='gb18030') as file:
             data = json.load(file)
         
         if len(data) == 1:
@@ -284,7 +284,7 @@ def delete_conversation_from_json(name):
         json_data = json.dumps(data, ensure_ascii=False, indent=4)
 
         # 将 JSON 数据写入文件
-        with open(filename, 'w', encoding='GBK') as file:
+        with open(filename, 'w', encoding='gb18030') as file:
             file.write(json_data)
     else:
         print("JSON 文件不存在。")
@@ -295,7 +295,7 @@ def modify_conversation_name(old_name, new_name):
     # 检查 JSON 文件是否存在
     if os.path.isfile(filename):
         # 如果文件存在，则读取文件内容并解析为字典
-        with open(filename, 'r', encoding='GBK') as file:
+        with open(filename, 'r', encoding='gb18030') as file:
             data = json.load(file)
         
         # 检查要修改的对话名称是否存在于字典中
@@ -318,7 +318,7 @@ def modify_conversation_name(old_name, new_name):
                 json_data = json.dumps(data, ensure_ascii=False, indent=4)
 
                 # 将 JSON 数据写入文件
-                with open(filename, 'w', encoding='GBK') as file:
+                with open(filename, 'w', encoding='gb18030') as file:
                     file.write(json_data)
                 return gr.Textbox(value=new_name)
         else:

@@ -2,6 +2,7 @@
 /gga-Notebook
 /.vscode
 /chat_cache.json
+/gga_runner.bat
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
