@@ -33,6 +33,8 @@ Then open a **Command Prompt (CMD)** in the folder where the codes are stored, a
 > The model **deployment name** **MUST** be the **same** as the **model name**!
 > For example, when deploying `'gpt-35-turbo'`, the deployment name of the model should also be `'gpt-35-turbo'`.
 
+> If you want to use the **latest model `gpt-4-1106-preview`** (which is call gpt-4-turbo in OpenAI Conference) ,you should **use `'gpt-4-turbo-pr'` as the deployment name**.
+
 2. Rename `.env_example` to `.env`. Change the environment variable:  `OPENAI_API_KEY` and `OPENAI_API_BASE`;  
   > `OPENAI_API_KEY`：Azure OpenAI key;  
   > `OPENAI_API_BASE`：Access key provided by Azure OpenAI.
@@ -50,6 +52,8 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
 
 # Todo List
 
+- [x] Adaptive language adaptation (Chinese, English supported)
+
 - [x] Use system-level prompts for role-playing
 
 - [x] Support for context quantity control
@@ -59,22 +63,26 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
 - [x] Detailed configuration of additional parameters
 
 - [x] Choose models
+  
+  - [ ] Support gpt-4-turbo(which is called `gpt-4-1106-preview` in Azure)
 
 - [x] Dialogue management
 
-- [x] RAG(Retrieval Augmented Generation)
+- [x] **RAG(Retrieval Augmented Generation)**
 
-  - [x] Chat with single file
+  - [x] **Chat with single file**
   
   - [x] Summarize the file
   
   - [x] Local knowledge base management
   
-  - [x] Chat with whole knowledge base
+  - [x] **Chat with whole knowledge base**
   
     - [ ] List citation sources
   
   - [x] Estimated cost of embedding files
+
+- [x] **Web requester(By prompts)**
 
 - [ ] Import and export chat history
   
