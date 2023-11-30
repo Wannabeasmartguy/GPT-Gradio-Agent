@@ -64,7 +64,7 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
 
 - [x] Choose models
   
-  - [ ] Support gpt-4-turbo(which is called `gpt-4-1106-preview` in Azure)
+  - [x] Support gpt-4-turbo(which is called `gpt-4-1106-preview` in Azure)
 
 - [x] Dialogue management
 
@@ -78,7 +78,7 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
   
   - [x] **Chat with whole knowledge base**
   
-    - [ ] List citation sources
+    - [x] List citation sources
   
   - [x] Estimated cost of embedding files
 
