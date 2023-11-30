@@ -19,7 +19,7 @@
     "The number of historical messages carried per request": "每次请求携带的历史消息数",
     "Additional Setting": "额外设置",
     "max_tokens": "最大 tokens 数",
-    "Maximum number of tokens carrying context interactions": "携带上下文交互的最大 token 数",
+    "Maximum number of tokens carrying context interactions.gpt-35-turbo:4000; gpt-35-turbo-16k:16000；gpt-4 & gpt-4-turbo-pr:8192; gpt-4-32k:32768": "携带上下文交互的最大 token 数：gpt-35-turbo:4000; gpt-35-turbo-16k:16000；gpt-4 & gpt-4-turbo-pr:8192; gpt-4-32k:32768",
     "Randomness: the larger the value, the more random the response is":"随机性：值越大，回复越随机",
     "Nuclear sampling: Similar to randomness, but not modified with randomness":"核采样：与随机性类似，但不要与随机性一起修改",
     "frequency_penalty": "频率惩罚度",
@@ -47,11 +47,12 @@
     "large file(map reduce)": "大文件(map reduce)",
     "large file(map rerank, for chat)": "大文件(map rerank, for chat)",
     "File size type": "文件大小类型",
-    "Also works for 'Summarize'. If the number of words to be summarized is large, select 'lagre size' (selecting 'small size' may result in exceeding the GPT's maximum Token).": "也作用于 '向知识库中文件提问' 按键。如果要汇总的字数较多，请选择 'lagre size'（选择 'small size' 可能会导致超过 GPT 的最大令牌数）。",
+    "Only works on the file selected in the file box. If the number of words to be summarized is large, select 'lagre size' (selecting 'small size' may result in exceeding the GPT's maximum Token).": "仅作用于文件框中选定的文件。如果要汇总的字数较多，请选择 'lagre size'（选择 'small size' 可能会导致超过 GPT 的最大令牌数）。",
     "Web Request": "Web 请求",
     "URL": "网址",
     "Paste the link to the page you want to request here.": "在此处粘贴您要申请的页面链接。",
     "Prompt Template": "提示模板",
     "Input the template you want to use here.": "在此输入您要使用的模板。",
-    "Request URL": "向网页发送请求"
+    "Request URL": "向网页发送请求",
+    "Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting.":"Max_token 已超过最大值，请缩短文本或减少 max_token 设置。"
 }

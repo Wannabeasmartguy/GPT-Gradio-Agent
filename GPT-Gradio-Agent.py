@@ -39,6 +39,17 @@ set_theme = adjust_theme()
 i18n = I18nAuto()  
 # <---------- set environmental parameters --------->
 
+def model_token_correct(model_choice:str):
+    '''Different model has different max tokens, this is to correct the max_token slider right.'''
+    model_maxtoken_dic = {
+        "gpt-35-turbo":3000,
+        "gpt-35-turbo-16k":15000,
+        "gpt-4":7000,
+        "gpt-4-32k":30000,
+        "gpt-4-turbo-pr":7000
+    }
+    return model_maxtoken_dic[model_choice]
+
 def stream(history_list:list,chat_history:list[dict]):
     '''
     Used to make LLM output looks like stream(Not real stream output).
@@ -87,11 +98,14 @@ def file_ask_stream(file_ask_history_list:list[list],file_answer:list):
         bot_message = file_answer[0]["answer"]
     except TypeError:
         raise gr.Error("No model response obtained")
+    ref_result = get_accordion(res=file_answer[0],response=file_answer[0]["answer"])
     file_ask_history_list[-1][1] = ""
     for character in bot_message:
         file_ask_history_list[-1][1] += character
         time.sleep(0.02)
         yield file_ask_history_list
+    file_ask_history_list[-1][1] += ref_result
+    yield file_ask_history_list
 
 def sum_stream(summarize_result,chatbot):
     '''
@@ -153,7 +167,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                         interactive=True,
                                         value=get_last_conversation_name(),
                                         info=i18n("Chatbot info"))
-                chat_bot = gr.Chatbot(height=500,
+                chat_bot = gr.Chatbot(height=600,
                                     value=get_last_conversation_content(),
                                     show_label=False,
                                     show_copy_button=True,
@@ -184,8 +198,8 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
             
                         with gr.Accordion(i18n("Additional Setting"),
                                           elem_id="Accordion"):
-                            max_tokens = gr.Slider(0, 4096, value=400, step=1, label="max_tokens",
-                                                info=i18n("Maximum number of tokens carrying context interactions"))
+                            max_tokens = gr.Slider(0, model_token_correct("gpt-35-turbo"), value=400, step=1, label="max_tokens",
+                                                info=i18n("Maximum number of tokens carrying context interactions.gpt-35-turbo:4000; gpt-35-turbo-16k:16000；gpt-4 & gpt-4-turbo-pr:8192; gpt-4-32k:32768"))
                             Temperature = gr.Slider(0, 2, value=0.5, step=0.1, label="Temperature",
                                                     info=i18n("Randomness: the larger the value, the more random the response is"))
                             top_p = gr.Slider(0, 1, value=1, step=0.1, label="top_p",
@@ -248,7 +262,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                      (i18n("large file(map rerank, for chat)"),"map_rerank")],
                                             value="refine",
                                             label=i18n("File size type"),
-                                            info=i18n("Also works for 'Summarize'. If the number of words to be summarized is large, select 'lagre size' (selecting 'small size' may result in exceeding the GPT's maximum Token)."))
+                                            info=i18n("Only works on the file selected in the file box. If the number of words to be summarized is large, select 'lagre size' (selecting 'small size' may result in exceeding the GPT's maximum Token)."))
             with gr.Tab("Agent"):
                 with gr.Tab(i18n("Web Request")):
                     sum_url = gr.Textbox(label=i18n("URL"),
@@ -312,6 +326,12 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                    Context_length, Temperature,max_tokens,top_p,frequency_penalty,
                    presence_penalty]
     output_param = [chat_bot, usr_msg, chat_his]
+
+    # update model max_token
+    model_choice.change(lambda model_choice: gr.Slider(maximum=model_token_correct(model_choice),value=400),
+                                                       inputs=[model_choice], 
+                                                       outputs=[max_tokens]
+                                                       )
 
     # chatbot button event
     message.submit(deliver,

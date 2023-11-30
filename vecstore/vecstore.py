@@ -4,10 +4,15 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import AzureChatOpenAI
 from langchain.chains import RetrievalQA,ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
+from openai.error import InvalidRequestError
 import openai
 import gradio as gr
 import pandas as pd
 import tiktoken
+import gradio as gr
+from gga_utils.common import *
+
+i18n = I18nAuto()  
 
 global chat_memory
 chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages=True)
@@ -94,27 +99,33 @@ def deliver(message:str,
 
     if context_length == 0:
         # If context_length == 0,clean up chat_history
-        response = openai.ChatCompletion.create(
-            engine=model_choice,
-            messages=[system_input,user_input],
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-            frequency_penalty=frequency_penalty,
-            presence_penalty=presence_penalty,
-            stop=None
+        try:
+            response = openai.ChatCompletion.create(
+                engine=model_choice,
+                messages=[system_input,user_input],
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
+                frequency_penalty=frequency_penalty,
+                presence_penalty=presence_penalty,
+                stop=None
         )
+        except InvalidRequestError:
+            raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
     else:
-        response = openai.ChatCompletion.create(
-            engine=model_choice,
-            messages=chat_history,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-            frequency_penalty=frequency_penalty,
-            presence_penalty=presence_penalty,
-            stop=None
-        )
+        try:
+            response = openai.ChatCompletion.create(
+                engine=model_choice,
+                messages=chat_history,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p,
+                frequency_penalty=frequency_penalty,
+                presence_penalty=presence_penalty,
+                stop=None
+            )
+        except InvalidRequestError:
+            raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
     reply = response.choices[0].message.content
     chat_history_list.append([message,None])
     chat_memory.save_context({"input": message},{"output": reply})
@@ -308,7 +319,7 @@ def ask_file(file_ask_history_list:list,
                 qa = ConversationalRetrievalChain.from_llm(
                                                             llm=llm,
                                                             retriever=vectorstore.as_retriever(search_type="mmr"),
-                                                            chain_type=sum_type,
+                                                            # chain_type=sum_type,
                                                             verbose=True,
                                                             return_source_documents=True,
                                                         )
@@ -323,7 +334,7 @@ def ask_file(file_ask_history_list:list,
             qa = ConversationalRetrievalChain.from_llm(
                                                         llm=llm,
                                                         retriever=vectorstore.as_retriever(search_type="mmr",search_kwargs={"filter":{"source":filter_goal[0]}}),
-                                                        chain_type=sum_type,
+                                                        # chain_type=sum_type,
                                                         verbose=True,
                                                         # memory=chat_memory,
                                                         return_source_documents=True,
@@ -400,3 +411,18 @@ def cal_token_cost(split_docs,model_name="text-embedding-ada-002"):
         return gr.Text("预计消耗费用: $ %0.5f"%cost)
     except AttributeError:
         raise gr.Error("Cost calculating failed")
+    
+def get_accordion(res, # 获得的 LLM 响应
+                  response,# 需要添加引用的原回答
+                  font_size=2, # 参考原文字体大小
+                  head_acc=50):# 能直接看到的文字数目
+    '''
+    Reference to the original text in accordian form
+    '''
+    x = res['source_documents']
+    refer_result = '\n\nSource:\n'
+    for i in x:
+        title = i.page_content[:head_acc].replace("\n", ' ').replace("<br>", ' ').replace("<p>", ' ').replace("\r", ' ')
+        content = i.page_content
+        refer_result += f"""<details><summary><font size="{font_size}">{title}</font></summary><font size="{font_size}">{content}</font></details>"""
+    return refer_result
