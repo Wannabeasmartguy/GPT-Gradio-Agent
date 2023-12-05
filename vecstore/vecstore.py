@@ -11,6 +11,7 @@ import pandas as pd
 import tiktoken
 import gradio as gr
 from gga_utils.common import *
+import functools
 
 i18n = I18nAuto()  
 
@@ -39,6 +40,38 @@ def convert_messages(messages:list):
         return None
     return converted_messages
 
+def reload_memory(chat_bot:list[list],
+                  context_length:int,
+                  ):
+    '''
+    Applies to two situations:\n
+    1. initialize the memory when client is created: to load contents in `chat_bot` as primary memory(according to `context_length`);
+    2. switch the dialog: load new chat memory. 
+    '''
+
+    global chat_memory
+    # Before initiate memory, clear it to make function have wider applicability
+    chat_memory.clear()
+
+    # if chat_bot is not null, and its length < context_length in setting, send it all to memery
+    if (chat_bot != None or chat_bot!=[]) and len(chat_bot)<=context_length:
+        for round in chat_bot:
+            message = round[0]
+            reply = round[1]
+            chat_memory.save_context({"input": message},{"output": reply})
+
+    # if chat_bot is not null, and its length > context_length in setting, send its latest rounds to memery
+    elif (chat_bot != None or chat_bot!=[]) and len(chat_bot)>context_length:
+        for round in chat_bot[-context_length:]:
+            message = round[0]
+            reply = round[1]
+            chat_memory.save_context({"input": message},{"output": reply})
+
+    else:
+        # if chat_bot is null, that means this chatbot is a new chat or is cleared
+        # nothing needs to be done
+        pass
+
 def deliver(message:str,
             model_choice:str,
             chat_history:list, 
@@ -55,10 +88,10 @@ def deliver(message:str,
     '''
     Response function for chat-only
     '''
+    # The first time run it, need to load the contents of chat_bot into memory by context_length
+
     global chat_memory
-    if chat_memory is None:
-        chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages=True)
-    
+
     # Load memory first
     memory_tmp = chat_memory.load_memory_variables({})["chat_memory"]
     
@@ -134,6 +167,25 @@ def deliver(message:str,
     chat_history = convert_messages(memory_tmp)
     
     return chat_history_list,message,chat_history
+
+def remove_last_chat(chat_history:list,
+                     chat_bot:list[list]):
+    '''Delete the latest round of conversation, fill `message` with last question.'''
+    if len(chat_bot)==1:
+        message = chat_bot[0][0]
+    elif len(chat_bot)==0 or chat_bot==None:
+        raise gr.Error(i18n("You haven't sent a message yet."))
+    else:
+        message = chat_bot[-1][0]
+
+    if chat_bot is not None and len(chat_bot) > 0:
+        # 删除最后一个元素
+        chat_bot.pop()
+    else:
+        raise gr.Error(i18n("You haven't sent a message yet."))
+    
+    # 返回原函数的结果
+    return chat_history,chat_bot,message
 
 def rst_mem(chat_his:list):
     '''

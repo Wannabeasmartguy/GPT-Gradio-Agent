@@ -8,9 +8,12 @@
     "Input your prompt": "输入你的指令",
     "'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.": "'Shift + Enter' 来换行. 'Enter' 键也可以用来发送指令.",
     "Export Chat History":"导出聊天记录",
+    "Delete previous round":"删除本轮",
+    "Clear": "清空当前对话",
+    "Regenerate":"重新生成",
     "Send": "发送",
     "Chat with file (Valid for 📁)": "向知识库 📁 中的文件提问",
-    "Summarize (Valid only for uploaded file)": "总结 (仅作用于文件框中选定的文件)",
+    "Summarize file content": "总结文件内容",
     "Chat": "Chat",
     "Commom Setting": "一般设置",
     "System Prompt": "系统指令",
@@ -54,5 +57,7 @@
     "Prompt Template": "提示模板",
     "Input the template you want to use here.": "在此输入您要使用的模板。",
     "Request URL": "向网页发送请求",
-    "Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting.":"Max_token 已超过最大值，请缩短文本或减少 max_token 设置。"
+    "Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting.":"Max_token 已超过最大值，请缩短文本或减少 max_token 设置。",
+    "Load dialog memory success!":"加载聊天历史记忆成功！",
+    "Successfully delete current round!":"成功删除当前轮次对话！"
 }

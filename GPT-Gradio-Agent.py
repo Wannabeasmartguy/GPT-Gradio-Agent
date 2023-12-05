@@ -179,11 +179,12 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                      scale=7)
                 export_his = gr.Button(value=i18n("Export Chat History"),scale=1)
             with gr.Row():
-                clear = gr.ClearButton([message, chat_bot,chat_his],scale=1,size="sm")
+                chat_with_file = gr.Button(value=i18n("Chat with file (Valid for 📁)"))
                 send = gr.Button(i18n("Send"),variant='primary',elem_id="btn",scale=2)
             with gr.Row():
-                chat_with_file = gr.Button(value=i18n("Chat with file (Valid for 📁)"))
-                summarize = gr.Button(value=i18n("Summarize (Valid only for uploaded file)"))
+                delete_latest_round_button = gr.Button(i18n("Delete previous round"),scale=1,size="sm")
+                regenerate_button = gr.Button(i18n("Regenerate"),scale=1,size="sm")
+                clear = gr.ClearButton([message, chat_bot,chat_his],value=i18n("Clear"),scale=1)
 
         with gr.Column():
             with gr.Tab(i18n("Chat")):
@@ -198,7 +199,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
             
                         with gr.Accordion(i18n("Additional Setting"),
                                           elem_id="Accordion"):
-                            max_tokens = gr.Slider(0, model_token_correct("gpt-35-turbo"), value=400, step=1, label="max_tokens",
+                            max_tokens = gr.Slider(0, model_token_correct("gpt-35-turbo"), value=1200, step=1, label="max_tokens",
                                                 info=i18n("Maximum number of tokens carrying context interactions.gpt-35-turbo:4000; gpt-35-turbo-16k:16000；gpt-4 & gpt-4-turbo-pr:8192; gpt-4-32k:32768"))
                             Temperature = gr.Slider(0, 2, value=0.5, step=0.1, label="Temperature",
                                                     info=i18n("Randomness: the larger the value, the more random the response is"))
@@ -224,6 +225,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                     ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"# Documents
                                                     ],
                                         height=150)
+                            summarize = gr.Button(value=i18n("Summarize file content"))
                             with gr.Row():
                                 estimate_cost = gr.Text(label=i18n("Estimated cost:"), 
                                                         info=i18n("Estimated cost of embed file"),
@@ -251,6 +253,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                 delete_file = gr.Button(value=i18n("Delete it (Selected in dropdown) from 📁"),
                                                         scale=1)  
                     with gr.Accordion(i18n("File chat setting"),
+                                      open=False,
                                       elem_id="Accordion"):
                         filter_choice = gr.Radio(choices=["All", "Selected file"],
                                                 value="All",
@@ -308,7 +311,9 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                  [Historylist],[chat_name]
                                  ).success(get_selected_conversation_content,
                                            [chat_name],
-                                           [chat_bot])
+                                           [chat_bot]).success(reload_memory,
+                                                               [chat_bot,Context_length]
+                                                               ).success(lambda: gr.Info(i18n("Load dialog memory success!")))
 
     chat_name.blur(modify_conversation_name,
                    inputs=[Historylist,chat_name],
@@ -328,39 +333,72 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     output_param = [chat_bot, usr_msg, chat_his]
 
     # update model max_token
-    model_choice.change(lambda model_choice: gr.Slider(maximum=model_token_correct(model_choice),value=400),
+    model_choice.change(lambda model_choice: gr.Slider(maximum=model_token_correct(model_choice),value=1200),
                                                        inputs=[model_choice], 
                                                        outputs=[max_tokens]
                                                        )
 
     # chatbot button event
-    message.submit(deliver,
-                   input_param, 
-                   output_param, 
-                   queue=False
-                   ).success(stream,
-                             [chat_bot,chat_his]
-                             ,chat_bot
-                             ).success(update_conversation_to_json,
-                                       [chat_name,chat_bot])
-    send.click(deliver,
-               input_param, 
-               output_param, 
-               queue=False
-               ).success(stream,
-                         [chat_bot,chat_his],
-                         chat_bot
-                         ).success(update_conversation_to_json,
-                                   [chat_name,chat_bot])
+    message.submit(reload_memory,
+                   [chat_bot,Context_length],
+                   ).success(deliver,
+                             input_param, 
+                             output_param, 
+                             queue=False
+                             ).then(lambda: gr.Textbox(value=''), 
+                                     [],
+                                     [message]
+                                     ).success(stream,
+                                        [chat_bot,chat_his]
+                                        ,chat_bot
+                                        ).success(update_conversation_to_json,
+                                                [chat_name,chat_bot])
+    send.click(reload_memory,
+               [chat_bot,Context_length],
+               ).success(deliver,
+                         input_param, 
+                         output_param, 
+                         queue=False
+                         ).then(lambda: gr.Textbox(value=''), [],[message]
+                                ).success(stream,
+                                         [chat_bot,chat_his],
+                                         chat_bot
+                                         ).success(update_conversation_to_json,
+                                                  [chat_name,chat_bot])
+    
+    regenerate_button.click(remove_last_chat,
+                            [chat_his,chat_bot],
+                            [chat_his,chat_bot,message]
+                            ).success(lambda: gr.Button(interactive=False),[],[send]
+                                     ).success(lambda: gr.Button(interactive=False),[],[chat_with_file]
+                                              ).success(reload_memory,
+                                                        [chat_bot,Context_length],
+                                                        ).success(deliver,
+                                                                 input_param, 
+                                                                 output_param, 
+                                                                 queue=False
+                                                                 ).then(lambda: gr.Textbox(value=''), [],[message]
+                                                                        ).success(stream,
+                                                                                [chat_bot,chat_his],
+                                                                                chat_bot
+                                                                                ).success(lambda: gr.Button(interactive=True),[],[send]
+                                                                                          ).success(lambda: gr.Button(interactive=True),[],[chat_with_file]
+                                                                                                    ).success(update_conversation_to_json,
+                                                                                                              [chat_name,chat_bot])
+    
     clear.click(rst_mem,
                 inputs=chat_his,
                 outputs=chat_his
                 ).success(update_conversation_to_json,
                           [chat_name,chat_bot])
+    
+    delete_latest_round_button.click(remove_last_chat,
+                                     [chat_his,chat_bot],
+                                     [chat_his,chat_bot]
+                                     ).success(update_conversation_to_json,
+                                              [chat_name,chat_bot]).success(lambda: gr.Info(i18n("Successfully delete current round!")))
+    
     export_his.click(export_to_markdown,[chat_bot,chat_name])
-
-    message.submit(lambda: gr.Textbox(value=''), [],[message])
-    send.click(lambda: gr.Textbox(value=''), [],[message])
     
     # chat_file button event
     file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full").then(cal_token_cost,[split_tmp],[estimate_cost])
