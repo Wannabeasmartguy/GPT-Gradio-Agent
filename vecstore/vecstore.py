@@ -5,12 +5,14 @@ from langchain.chat_models import AzureChatOpenAI
 from langchain.chains import RetrievalQA,ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from openai.error import InvalidRequestError
+import chromadb
 import openai
 import gradio as gr
 import pandas as pd
 import tiktoken
 import gradio as gr
 from gga_utils.common import *
+from gga_utils.vec_utils import *
 import functools
 
 i18n = I18nAuto()  
@@ -21,7 +23,53 @@ chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages
 def _init():
     global vec_store
     vec_store = Chroma()
+    
+def combine_lists_to_dicts(docs, ids, metas):
+    """
+    将三个列表的对应元素组合成一个个字典，然后将这些字典保存在一个列表中。
 
+    参数:
+    docs (list of str): 文档名列表
+    ids (list of str): id列表
+    metas (list of str): 元数据列表
+
+    返回:
+    list of dict: 每个字典包含三个键值对，键分别是"documents", "ids", "metadatas"，值来自对应的列表
+
+    示例:
+    combine_lists_to_dicts(["你好","hello"], ["sabea-12","asdao-141"], ["CoT.txt","abs.txt"])
+    返回 [{"documents":"你好","ids":"sabea-12","metadatas":"CoT.txt"},{"documents":"hello","ids":"asdao-141","metadatas":"abs.txt"}]
+    """
+
+    # 使用zip函数将三个列表的对应元素打包成一个个元组
+    tuples = zip(docs, ids, metas)
+
+    # 将每个元组转换为字典，然后将这些字典保存在一个列表中
+    dict_lists = [{"documents": doc, "ids": id, "metadatas": meta} for doc, id, meta in tuples]
+
+    return dict_lists
+
+def get_chroma_info(persist_path:str,
+                    file_name:str,
+                    advance_info:bool,
+                    limit:int=100):
+    try:
+        client = chromadb.PersistentClient(path=persist_path)
+        collection_lang = client.get_collection("langchain")
+    except ValueError:
+        raise gr.Error(i18n("“Knowledge Base path” is empty, Please enter the path"))
+    metadata_pre10 = collection_lang.peek(limit=limit)  
+    
+    #get data for the first <limit> files 
+    documents = metadata_pre10['documents']
+    ids = metadata_pre10['ids']
+    metadatas = metadata_pre10['metadatas']
+
+    chroma_data_dic = combine_lists_to_dicts(documents, ids, metadatas)
+    
+    kb_info_html = dict_to_html(chroma_data_dic,file_name,advance_info)
+    return kb_info_html
+    
 def convert_messages(messages:list):
     """
     Converts messages to the format expected by the chat model.
@@ -310,7 +358,7 @@ def load_vectorstore(persist_vec_path:str):
         vectorstore = Chroma(persist_directory=persist_vec_path, 
                              embedding_function=OpenAIEmbeddings())
     else:
-        raise gr.Error("You didn't provide an absolute path to the knowledge base")
+        raise gr.Error(i18n("You didn't provide an absolute path to the knowledge base"))
 
     try:
         vct_store = vectorstore.get()
@@ -324,10 +372,10 @@ def load_vectorstore(persist_vec_path:str):
 
         df = pd.DataFrame(file_names, columns=['文件名称'])
 
-        gr.Info('Successfully load kowledge base.')
+        gr.Info(i18n("Successfully load kowledge base."))
         return df,gr.Dropdown(value=file_names[0],choices=file_names)
     except IndexError:
-        gr.Info('No file in vectorstore.')
+        gr.Info(i18n('No file in vectorstore.'))
         return df,gr.Dropdown(choices=[])
 
 def refresh_file_list(df):

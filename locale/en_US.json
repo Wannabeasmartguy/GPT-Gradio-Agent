@@ -53,5 +53,16 @@
     "Paste the link to the page you want to request here.": "Paste the link to the page you want to request here.",
     "Prompt Template": "Prompt Template",
     "Input the template you want to use here.": "Input the template you want to use here.",
-    "Request URL": "Request URL"
+    "Request URL": "Request URL",
+    "Successfully delete current round!":"Successfully delete current round!",
+    "ChatInterface":"ChatInterface",
+    "Knowledge Base Info Interface":"Knowledge Base Info Interface",
+    "Knowledge Base path":"Knowledge Base path",
+    "Knowledge base not loaded":"Knowledge base not loaded",
+    "Refresh":"Refresh",
+    "Successfully load kowledge base.":"Successfully load kowledge base.",
+    "No file in vectorstore.":"No file in vectorstore.",
+    "Show document details":"Show document details",
+    "“Knowledge Base path” is empty, Please enter the path":"“Knowledge Base path” is empty, Please enter the path",
+    "You didn't provide an absolute path to the knowledge base":"You didn't provide an absolute path to the knowledge base"
 }

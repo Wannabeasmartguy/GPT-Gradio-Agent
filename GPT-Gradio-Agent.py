@@ -11,6 +11,7 @@ from vecstore.Agent import *
 from gga_utils.common import *
 from gga_utils.theme import *
 from vecstore.template import *
+from gga_utils.vec_utils import *
 
 # import langchain to chat with file
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -162,29 +163,44 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                     value="gpt-35-turbo",
                                     label=i18n("Model"),
                                     info=i18n("Model info"),)
-            with gr.Group():
-                chat_name = gr.Textbox(label=i18n("Chatbot name"),
-                                        interactive=True,
-                                        value=get_last_conversation_name(),
-                                        info=i18n("Chatbot info"))
-                chat_bot = gr.Chatbot(height=600,
-                                    value=get_last_conversation_content(),
-                                    show_label=False,
-                                    show_copy_button=True,
-                                    bubble_full_width=False,
-                                    render_markdown=True,)
-            with gr.Row():
-                message = gr.Textbox(label=i18n("Input your prompt"),
-                                     info=i18n("'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM."),
-                                     scale=7)
-                export_his = gr.Button(value=i18n("Export Chat History"),scale=1)
-            with gr.Row():
-                chat_with_file = gr.Button(value=i18n("Chat with file (Valid for 📁)"))
-                send = gr.Button(i18n("Send"),variant='primary',elem_id="btn",scale=2)
-            with gr.Row():
-                delete_latest_round_button = gr.Button(i18n("Delete previous round"),scale=1,size="sm")
-                regenerate_button = gr.Button(i18n("Regenerate"),scale=1,size="sm")
-                clear = gr.ClearButton([message, chat_bot,chat_his],value=i18n("Clear"),scale=1)
+            with gr.Tab(label=i18n("ChatInterface")):
+                with gr.Group():
+                    chat_name = gr.Textbox(label=i18n("Chatbot name"),
+                                            interactive=True,
+                                            value=get_last_conversation_name(),
+                                            info=i18n("Chatbot info"))
+                    chat_bot = gr.Chatbot(height=600,
+                                        value=get_last_conversation_content(),
+                                        show_label=False,
+                                        show_copy_button=True,
+                                        bubble_full_width=False,
+                                        render_markdown=True,)
+                with gr.Row():
+                    message = gr.Textbox(label=i18n("Input your prompt"),
+                                        info=i18n("'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM."),
+                                        scale=7)
+                    export_his = gr.Button(value=i18n("Export Chat History"),scale=1)
+                with gr.Row():
+                    chat_with_file = gr.Button(value=i18n("Chat with file (Valid for 📁)"))
+                    send = gr.Button(i18n("Send"),variant='primary',elem_id="btn",scale=2)
+                with gr.Row():
+                    delete_latest_round_button = gr.Button(i18n("Delete previous round"),scale=1,size="sm")
+                    regenerate_button = gr.Button(i18n("Regenerate"),scale=1,size="sm")
+                    clear = gr.ClearButton([message, chat_bot,chat_his],value=i18n("Clear"),scale=1)
+
+            with gr.Tab(label=i18n("Knowledge Base Info Interface")):
+                kb_vector_content = gr.DataFrame(visible=False,interactive=False,)
+                with gr.Row():
+                    kb_path = gr.Textbox(label=i18n("Knowledge Base path"),
+                                         scale=3)
+                    kb_file_list = gr.Dropdown(interactive=True,        # The contents are exactly the same as file_list
+                                                # allow_custom_value=True,
+                                                label=i18n("File list"),
+                                                scale=3)
+                    with gr.Column(scale=1):
+                        refresh_kb_info = gr.Button(value=i18n("Refresh"))
+                        advance_kb_info = gr.Checkbox(label=i18n("Show document details"))
+                kb_info = gr.HTML(value=i18n("Knowledge base not loaded"))
 
         with gr.Column():
             with gr.Tab(i18n("Chat")):
@@ -338,6 +354,22 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                        outputs=[max_tokens]
                                                        )
 
+    # Knowledge base refresh button event
+    refresh_kb_info.click(load_vectorstore,
+                          inputs=[kb_path],
+                          outputs=[kb_vector_content,kb_file_list]
+                          ).success(get_chroma_info,
+                                    [kb_path,kb_file_list,advance_kb_info],
+                                    [kb_info])
+    
+    kb_file_list.change(get_chroma_info,
+                        [kb_path,kb_file_list,advance_kb_info],
+                        [kb_info])
+    
+    advance_kb_info.select(get_chroma_info,
+                           [kb_path,kb_file_list,advance_kb_info],
+                           [kb_info])
+    
     # chatbot button event
     message.submit(reload_memory,
                    [chat_bot,Context_length],
@@ -427,7 +459,16 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
 
     # Manage vectorstore event
     create_vec_but.click(create_vectorstore,inputs=[vector_path])
-    load_vec.click(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
+    load_vec.click(load_vectorstore,
+                   inputs=[vector_path],
+                   outputs=[vector_content,file_list]
+                   ).then(lambda vector_path:gr.Textbox(value=vector_path),
+                          [vector_path],
+                          [kb_path]
+                          ).then(load_vectorstore,
+                                 [vector_path],
+                                 [kb_vector_content,kb_file_list])
+    
     #file_list.change(refresh_file_list,inputs=[vector_content],outputs=file_list)
     add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp,file],outputs=[vector_content,file_list]).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
     delete_file.click(delete_flie_in_vectorstore,inputs=file_list).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
