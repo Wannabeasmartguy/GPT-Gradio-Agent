@@ -66,6 +66,10 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
   
   - [x] Support gpt-4-turbo(which is called `gpt-4-1106-preview` in Azure)
 
+  - [ ] Image input with gpt-4-turbo support (requires additional deployment of Azure's Computer Vision resources)
+  
+  - [ ] Generating images using Dall-E 3
+
 - [x] Dialogue management
 
 - [x] **RAG(Retrieval Augmented Generation)**

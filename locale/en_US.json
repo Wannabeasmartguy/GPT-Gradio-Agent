@@ -19,7 +19,7 @@
     "The number of historical messages carried per request": "The number of historical messages carried per request",
     "Additional Setting": "Additional Setting",
     "max_tokens": "max_tokens",
-    "Maximum number of tokens carrying context interactions": "Maximum number of tokens carrying context interactions",
+    "Maximum number of tokens carrying context interactions.": "Maximum number of tokens carrying context interactions.",
     "Randomness: the larger the value, the more random the response is": "Randomness: the larger the value, the more random the response is",
     "Nuclear sampling: Similar to randomness, but not modified with randomness":"Nuclear sampling: Similar to randomness, but not modified with randomness",
     "frequency_penalty": "frequency_penalty",
@@ -64,5 +64,8 @@
     "No file in vectorstore.":"No file in vectorstore.",
     "Show document details":"Show document details",
     "“Knowledge Base path” is empty, Please enter the path":"“Knowledge Base path” is empty, Please enter the path",
-    "You didn't provide an absolute path to the knowledge base":"You didn't provide an absolute path to the knowledge base"
+    "You didn't provide an absolute path to the knowledge base":"You didn't provide an absolute path to the knowledge base",
+    "'Shift + Enter' to begin an new line. ":"Shift + Enter' to begin an new line. ",
+    "Generate":"Generate",
+    "Open output directory":"Open output directory"
 }

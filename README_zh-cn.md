@@ -59,6 +59,10 @@
 - [x] 模型选择
 
   - [x] 支持 gpt-4-turbo（ Azure 中名称为`gpt-4-1106-preview`）
+  
+  - [ ] 支持 gpt-4-turbo 的图片输入（需要额外部署 Azure 的 Computer Vision 资源）
+  
+  - [ ] 支持使用 Dall-E 3 生成图片
 
 - [x] 对话管理 
 

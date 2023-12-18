@@ -82,7 +82,7 @@ def upload_file(file_obj,
         raise gr.Error("File upload failed. This may be due to formatting issues (non-standard formats)")
 
     # initialize splitter
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=30)
+    text_splitter = CharacterTextSplitter(chunk_size=600, chunk_overlap=0)
     split_docs = text_splitter.split_documents(document)
     split_tmp.append(split_docs)
     progress(1, desc="Dealing...")
@@ -129,7 +129,6 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     )
     usr_msg = gr.State()
     chat_his = gr.State([])
-    # chat_memory = gr.State(ConversationBufferMemory(memory_key="chat_memory", return_messages=True))
     with gr.Row():
         with gr.Column(elem_id="history"):
             with gr.Row():
@@ -201,6 +200,22 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                         refresh_kb_info = gr.Button(value=i18n("Refresh"))
                         advance_kb_info = gr.Checkbox(label=i18n("Show document details"))
                 kb_info = gr.HTML(value=i18n("Knowledge base not loaded"))
+            with gr.Tab(label="Dall-E"):
+                with gr.Row():
+                    t2p_model = gr.Radio(choices=["Dall-E-3"],
+                                         value="Dall-E-3",
+                                         label=i18n("Model"),
+                                         scale=1)
+                    pic_gen_prompt = gr.Textbox(label=i18n("Input your prompt"),
+                                                info=i18n("'Shift + Enter' to begin an new line. "),
+                                                scale=5)
+                    pic_gen_button = gr.Button(value=i18n("Generate"),
+                                               variant="primary",
+                                               elem_id="btn",
+                                               scale=1)
+                img = gr.Image(height=400,
+                               interactive=False)
+                open_dir = gr.Button(value=i18n("Open output directory"))
 
         with gr.Column():
             with gr.Tab(i18n("Chat")):
@@ -216,7 +231,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                         with gr.Accordion(i18n("Additional Setting"),
                                           elem_id="Accordion"):
                             max_tokens = gr.Slider(0, model_token_correct("gpt-35-turbo"), value=1200, step=1, label="max_tokens",
-                                                info=i18n("Maximum number of tokens carrying context interactions.gpt-35-turbo:4000; gpt-35-turbo-16k:16000；gpt-4 & gpt-4-turbo-pr:8192; gpt-4-32k:32768"))
+                                                info=i18n("Maximum number of tokens carrying context interactions."))
                             Temperature = gr.Slider(0, 2, value=0.5, step=0.1, label="Temperature",
                                                     info=i18n("Randomness: the larger the value, the more random the response is"))
                             top_p = gr.Slider(0, 1, value=1, step=0.1, label="top_p",

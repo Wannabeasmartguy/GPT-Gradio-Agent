@@ -22,7 +22,7 @@
     "The number of historical messages carried per request": "每次请求携带的历史消息数",
     "Additional Setting": "额外设置",
     "max_tokens": "最大 tokens 数",
-    "Maximum number of tokens carrying context interactions.gpt-35-turbo:4000; gpt-35-turbo-16k:16000；gpt-4 & gpt-4-turbo-pr:8192; gpt-4-32k:32768": "携带上下文交互的最大 token 数：gpt-35-turbo:4000; gpt-35-turbo-16k:16000；gpt-4 & gpt-4-turbo-pr:8192; gpt-4-32k:32768",
+    "Maximum number of tokens carrying context interactions.": "携带上下文交互的最大 token 数",
     "Randomness: the larger the value, the more random the response is":"随机性：值越大，回复越随机",
     "Nuclear sampling: Similar to randomness, but not modified with randomness":"核采样：与随机性类似，但不要与随机性一起修改",
     "frequency_penalty": "频率惩罚度",
@@ -69,5 +69,8 @@
     "No file in vectorstore.":"知识库里无文件",
     "Show document details":"显示文档详情",
     "“Knowledge Base path” is empty, Please enter the path":"“知识库路径”为空,请输入路径",
-    "You didn't provide an absolute path to the knowledge base":"你没有提供知识库的绝对路径"
+    "You didn't provide an absolute path to the knowledge base":"你没有提供知识库的绝对路径",
+    "'Shift + Enter' to begin an new line. ":"Shift + Enter' 换行。",
+    "Generate":"生成",
+    "Open output directory":"打开输出目录"
 }
