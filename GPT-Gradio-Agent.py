@@ -15,15 +15,13 @@ from gga_utils.vec_utils import *
 
 # import langchain to chat with file
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.chat_models import AzureChatOpenAI
-from langchain.document_loaders import DirectoryLoader,PyPDFLoader,UnstructuredFileLoader
+from langchain_community.document_loaders import DirectoryLoader,PyPDFLoader,UnstructuredFileLoader
 from langchain.chains import RetrievalQA
 
 load_dotenv()
 
-openai.api_base = os.getenv('OPENAI_API_BASE')
+openai.base_url = os.getenv('OPENAI_API_BASE')
 openai.api_key = os.getenv('OPENAI_API_KEY')
 openai.api_version = os.getenv('OPENAI_API_VERSION')
 openai.api_type = os.getenv('OPENAI_API_TYPE')
