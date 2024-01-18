@@ -3,6 +3,8 @@
 /.vscode
 /chat_cache.json
 /gga_runner.bat
+/test.py
+/test.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

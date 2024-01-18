@@ -1,7 +1,7 @@
 from langchain.chains.summarize import load_summarize_chain
 from langchain_community.vectorstores import chroma
-from langchain_community.embeddings import AzureOpenAIEmbeddings
-from langchain_community.chat_models import AzureChatOpenAI
+from langchain_openai.embeddings import AzureOpenAIEmbeddings
+from langchain_openai.chat_models import AzureChatOpenAI
 from langchain.chains import RetrievalQA,ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from openai import BadRequestError
@@ -24,9 +24,9 @@ global chat_memory
 chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages=True)
 
 client = AzureOpenAI(
-  azure_endpoint = os.getenv('OPENAI_API_BASE'), 
-  api_key = os.getenv('OPENAI_API_KEY'),  
-  api_version = os.getenv('OPENAI_API_VERSION')
+  azure_endpoint = os.getenv('AZURE_OAI_ENDPOINT'), 
+  api_key = os.getenv('AZURE_OAI_KEY'),  
+  api_version = os.getenv('API_VERSION')
 )
 
 def _init():
@@ -262,8 +262,11 @@ def create_vectorstore(persist_vec_path:str):
     import os
     if os.path.isabs(persist_vec_path):
         embeddings = AzureOpenAIEmbeddings(
+                                            openai_api_type=os.getenv('API_TYPE'),
+                                            azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                                            openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                                            openai_api_version=os.getenv('API_VERSION'),
                                             azure_deployment="text-embedding-ada-002",
-                                            openai_api_version=os.getenv('OPENAI_API_VERSION'),
                                             )
 
         # global vectorstore
@@ -366,7 +369,13 @@ def load_vectorstore(persist_vec_path:str):
 
     if persist_vec_path:
         vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
-                             embedding_function=AzureOpenAIEmbeddings())
+                             embedding_function=AzureOpenAIEmbeddings(
+                                            openai_api_type=os.getenv('API_TYPE'),
+                                            azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                                            openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                                            openai_api_version=os.getenv('API_VERSION'),
+                                            azure_deployment="text-embedding-ada-002",
+                                    ))
     else:
         raise gr.Error(i18n("You didn't provide an absolute path to the knowledge base"))
 
@@ -413,8 +422,12 @@ def ask_file(file_ask_history_list:list,
         chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages=True)
 
     llm = AzureChatOpenAI(model=model_choice,
-                    openai_api_type="azure",
-                    deployment_name=model_choice, 
+                    openai_api_type=os.getenv('API_TYPE'),
+                    azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                    openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                    openai_api_version=os.getenv('API_VERSION'),
+                    # eployment_name=os.getenv('AZURE_OAI_ENDPOINT')+ "deployments/" +'gpt-35-turbo', 
+                    deployment_name=model_choice,
                     temperature=0.7)
     
     source_data = vectorstore.get()
@@ -433,7 +446,7 @@ def ask_file(file_ask_history_list:list,
                                                             verbose=True,
                                                             return_source_documents=True,
                                                         )
-                result = qa({"question": question_prompt,"chat_history": chat_history_re})
+                result = qa.invoke({"question": question_prompt,"chat_history": chat_history_re})
                 chat_memory.save_context({"input": result["question"]},{"output": result["answer"]})
             except (NameError):
                 raise gr.Error("You have not load kownledge base yet.")
@@ -451,7 +464,7 @@ def ask_file(file_ask_history_list:list,
                                                     )
             
             # get chain's result
-            result = qa({"question": question_prompt,"chat_history": chat_history_re})
+            result = qa.invoke({"question": question_prompt,"chat_history": chat_history_re})
             chat_memory.save_context({"input": result["question"]},{"output": result["answer"]})
 
         usr_prob = result["question"]
@@ -466,13 +479,18 @@ def ask_file(file_ask_history_list:list,
 
 def summarize_file(split_docs,chatbot,model_choice,sum_type):
     llm = AzureChatOpenAI(model=model_choice,
-                    openai_api_type="azure",
-                    deployment_name=model_choice, # <----------设置选择模型的时候修改这里
+                    openai_api_type=os.getenv('API_TYPE'),
+                    azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                    openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                    openai_api_version=os.getenv('API_VERSION'),
+                    # eployment_name=os.getenv('AZURE_OAI_ENDPOINT')+ "deployments/" +'gpt-35-turbo', 
+                    deployment_name=model_choice,
                     temperature=0.7)
     # 创建总结链
     chain = load_summarize_chain(llm, chain_type=sum_type, verbose=True)
     
     # 执行总结链
+    # 这里的 run 方法在 langchain v0.1 可用，v0.2将废除
     summarize_result = chain.run(split_docs[-1])
 
     # 构造 chatbox 格式

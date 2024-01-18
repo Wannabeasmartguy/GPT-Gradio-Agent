@@ -21,10 +21,10 @@ from langchain.chains import RetrievalQA
 
 load_dotenv()
 
-openai.base_url = os.getenv('OPENAI_API_BASE')
-openai.api_key = os.getenv('OPENAI_API_KEY')
-openai.api_version = os.getenv('OPENAI_API_VERSION')
-openai.api_type = os.getenv('OPENAI_API_TYPE')
+# openai.base_url = os.getenv('OPENAI_API_BASE')
+# openai.api_key = os.getenv('OPENAI_API_KEY')
+# openai.api_version = os.getenv('OPENAI_API_VERSION')
+# openai.api_type = os.getenv('OPENAI_API_TYPE')
 
 # initialize the embedding model setting 
 embedding_model = "text-embedding-ada-002"
