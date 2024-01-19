@@ -67,5 +67,17 @@
     "You didn't provide an absolute path to the knowledge base":"You didn't provide an absolute path to the knowledge base",
     "'Shift + Enter' to begin an new line. ":"Shift + Enter' to begin an new line. ",
     "Generate":"Generate",
-    "Open output directory":"Open output directory"
+    "Open output directory":"Open output directory",
+    "image setting":"image setting",
+    "Actual prompt":"Actual prompt",
+    "Image size":"Image size",
+    "Image quality":"Image quality",
+    "standard":"standard",
+    "hd":"hd",
+    "Image style":"Image style",
+    "natural":"natural",
+    "vivid":"vivid",
+    "Starting...":"Starting...",
+    "Requesting Dall-e-3 response...":"Requesting Dall-e-3 response...",
+    "The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered.":"The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered."
 }

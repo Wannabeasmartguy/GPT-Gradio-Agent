@@ -12,6 +12,7 @@ from gga_utils.common import *
 from gga_utils.theme import *
 from vecstore.template import *
 from gga_utils.vec_utils import *
+from pic_gen.pic_gen import *
 
 # import langchain to chat with file
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -45,7 +46,8 @@ def model_token_correct(model_choice:str):
         "gpt-35-turbo-16k":15000,
         "gpt-4":7000,
         "gpt-4-32k":30000,
-        "gpt-4-turbo-pr":7000
+        "gpt-4-1106-preview":128000,
+        "gpt-4-vision-preview":128000
     }
     return model_maxtoken_dic[model_choice]
 
@@ -199,20 +201,43 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                         advance_kb_info = gr.Checkbox(label=i18n("Show document details"))
                 kb_info = gr.HTML(value=i18n("Knowledge base not loaded"))
             with gr.Tab(label="Dall-E"):
-                with gr.Row():
-                    t2p_model = gr.Radio(choices=["Dall-E-3"],
-                                         value="Dall-E-3",
-                                         label=i18n("Model"),
-                                         scale=1)
+                with gr.Row(equal_height=True):
                     pic_gen_prompt = gr.Textbox(label=i18n("Input your prompt"),
                                                 info=i18n("'Shift + Enter' to begin an new line. "),
                                                 scale=5)
                     pic_gen_button = gr.Button(value=i18n("Generate"),
-                                               variant="primary",
-                                               elem_id="btn",
-                                               scale=1)
-                img = gr.Image(height=400,
-                               interactive=False)
+                                            variant="primary",
+                                            elem_id="btn",
+                                            scale=1)
+                with gr.Accordion(label=i18n("image setting"),
+                                  elem_id="Accordion",
+                                  open=False):
+                    with gr.Row():
+                        t2p_model = gr.Radio(choices=["Dall-E-3"],
+                                            value="Dall-E-3",
+                                            label=i18n("Model"),
+                                            scale=2)
+                        image_style_radio = gr.Radio(choices=[(i18n('natural'),'natural'), 
+                                                                (i18n('vivid'),'vivid')],
+                                                        label=i18n("Image style"),
+                                                        value='natural',
+                                                        scale=1,)
+                    with gr.Row():
+                        image_size_radio = gr.Radio(choices=['1024x1024','1792x1024', '1024x1792'],
+                                                          label=i18n("Image size"),
+                                                          value='1024x1024',
+                                                          scale=2,)
+                        image_quality_dropdown = gr.Dropdown(choices=[(i18n('standard'),'standard'),
+                                                                       i18n('hd'),'hd'],
+                                                             label=i18n("Image quality"),
+                                                             value='standard',
+                                                             scale=1,) 
+                img = gr.Image()
+                actual_prompt = gr.Textbox(label=i18n("Actual prompt"),
+                                           info=i18n("The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered."),
+                                           show_copy_button=True,
+                                           interactive=False,
+                                           scale=1)
                 open_dir = gr.Button(value=i18n("Open output directory"))
 
         with gr.Column():
@@ -383,7 +408,10 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                            [kb_path,kb_file_list,advance_kb_info],
                            [kb_info])
     
-    # chatbot button event
+    '''
+    chatbot button event
+    '''
+
     message.submit(reload_memory,
                    [chat_bot,Context_length],
                    ).success(deliver,
@@ -445,7 +473,10 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     
     export_his.click(export_to_markdown,[chat_bot,chat_name])
     
-    # chat_file button event
+    '''
+    chat_file button event
+    '''
+
     file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full").then(cal_token_cost,[split_tmp],[estimate_cost])
     file.clear(lambda:gr.Textbox(value=''),[],[estimate_cost])
     refresh_file_cost.click(lambda:gr.Text(),[],[estimate_cost]).then(lambda:gr.File(),[],[file]).then(lambda:gr.Text(),[],[estimate_cost])
@@ -491,6 +522,16 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                          inputs=[model_choice,sum_url,chat_bot,web_template],
                          outputs=[chat_bot]).success(update_conversation_to_json,
                                                       [chat_name,chat_bot])
+    
+    '''
+    Dall-e-3
+    '''
+
+    pic_gen_button.click(generate_dall3_image,
+                          inputs=[pic_gen_prompt,image_size_radio,image_quality_dropdown,image_style_radio],
+                          outputs=[img,actual_prompt])
+    
+    open_dir.click(fn = open_dir_func)
 
 demo.queue().launch(inbrowser=True,debug=True,show_api=False
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"
