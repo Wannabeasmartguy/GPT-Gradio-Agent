@@ -19,7 +19,7 @@
 
 **v0.9.0 新增**：你现在不仅可以查看知识库的文件目录，还可以查看知识库内的具体内容，并且了解具体的分块情况。
 
-![detail of knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/e70154ac-b6a7-451f-b6fe-d42ce31f48e1)
+![knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/883315f0-b2f0-4c39-acc9-6f4104fe9609)
 
 点击勾选框，就可以查看分块的具体信息：
 
