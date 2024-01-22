@@ -1,12 +1,12 @@
 from langchain.chains.summarize import load_summarize_chain
-from langchain.vectorstores import Chroma
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.chat_models import AzureChatOpenAI
+from langchain_community.vectorstores import chroma
+from langchain_openai.embeddings import AzureOpenAIEmbeddings
+from langchain_openai.chat_models import AzureChatOpenAI
 from langchain.chains import RetrievalQA,ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from openai.error import InvalidRequestError
+from openai import BadRequestError
 import chromadb
-import openai
+from openai import AzureOpenAI
 import gradio as gr
 import pandas as pd
 import tiktoken
@@ -14,15 +14,24 @@ import gradio as gr
 from gga_utils.common import *
 from gga_utils.vec_utils import *
 import functools
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 i18n = I18nAuto()  
 
 global chat_memory
 chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages=True)
 
+client = AzureOpenAI(
+  azure_endpoint = os.getenv('AZURE_OAI_ENDPOINT'), 
+  api_key = os.getenv('AZURE_OAI_KEY'),  
+  api_version = os.getenv('API_VERSION')
+)
+
 def _init():
     global vec_store
-    vec_store = Chroma()
+    vec_store = chroma()
     
 def combine_lists_to_dicts(docs, ids, metas):
     """
@@ -181,31 +190,29 @@ def deliver(message:str,
     if context_length == 0:
         # If context_length == 0,clean up chat_history
         try:
-            response = openai.ChatCompletion.create(
-                engine=model_choice,
+            response = client.chat.completions.create(
+                model=model_choice,
                 messages=[system_input,user_input],
                 temperature=temperature,
                 max_tokens=max_tokens,
                 top_p=top_p,
                 frequency_penalty=frequency_penalty,
                 presence_penalty=presence_penalty,
-                stop=None
         )
-        except InvalidRequestError:
+        except BadRequestError:
             raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
     else:
         try:
-            response = openai.ChatCompletion.create(
-                engine=model_choice,
+            response = client.chat.completions.create(
+                model=model_choice,
                 messages=chat_history,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 top_p=top_p,
                 frequency_penalty=frequency_penalty,
                 presence_penalty=presence_penalty,
-                stop=None
             )
-        except InvalidRequestError:
+        except BadRequestError:
             raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
     reply = response.choices[0].message.content
     chat_history_list.append([message,None])
@@ -254,10 +261,16 @@ def create_vectorstore(persist_vec_path:str):
     
     import os
     if os.path.isabs(persist_vec_path):
-        embeddings = OpenAIEmbeddings()
+        embeddings = AzureOpenAIEmbeddings(
+                                            openai_api_type=os.getenv('API_TYPE'),
+                                            azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                                            openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                                            openai_api_version=os.getenv('API_VERSION'),
+                                            azure_deployment="text-embedding-ada-002",
+                                            )
 
         # global vectorstore
-        vectorstore = Chroma(persist_directory=persist_vec_path,embedding_function=embeddings)
+        vectorstore = chroma.Chroma(persist_directory=persist_vec_path,embedding_function=embeddings)
         vectorstore.persist()
     else:
         raise gr.Error("The path is not valid.")
@@ -278,8 +291,8 @@ def add_file_in_vectorstore(persist_vec_path:str,
 
     if persist_vec_path:
         global vectorstore
-        vectorstore = Chroma(persist_directory=persist_vec_path, 
-                             embedding_function=OpenAIEmbeddings())
+        vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
+                             embedding_function=AzureOpenAIEmbeddings())
     else:
         raise gr.Error("You haven't chosen a knowledge base yet.")
     
@@ -355,8 +368,14 @@ def load_vectorstore(persist_vec_path:str):
     global vectorstore
 
     if persist_vec_path:
-        vectorstore = Chroma(persist_directory=persist_vec_path, 
-                             embedding_function=OpenAIEmbeddings())
+        vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
+                             embedding_function=AzureOpenAIEmbeddings(
+                                            openai_api_type=os.getenv('API_TYPE'),
+                                            azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                                            openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                                            openai_api_version=os.getenv('API_VERSION'),
+                                            azure_deployment="text-embedding-ada-002",
+                                    ))
     else:
         raise gr.Error(i18n("You didn't provide an absolute path to the knowledge base"))
 
@@ -403,8 +422,12 @@ def ask_file(file_ask_history_list:list,
         chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages=True)
 
     llm = AzureChatOpenAI(model=model_choice,
-                    openai_api_type="azure",
-                    deployment_name=model_choice, 
+                    openai_api_type=os.getenv('API_TYPE'),
+                    azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                    openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                    openai_api_version=os.getenv('API_VERSION'),
+                    # eployment_name=os.getenv('AZURE_OAI_ENDPOINT')+ "deployments/" +'gpt-35-turbo', 
+                    deployment_name=model_choice,
                     temperature=0.7)
     
     source_data = vectorstore.get()
@@ -423,7 +446,7 @@ def ask_file(file_ask_history_list:list,
                                                             verbose=True,
                                                             return_source_documents=True,
                                                         )
-                result = qa({"question": question_prompt,"chat_history": chat_history_re})
+                result = qa.invoke({"question": question_prompt,"chat_history": chat_history_re})
                 chat_memory.save_context({"input": result["question"]},{"output": result["answer"]})
             except (NameError):
                 raise gr.Error("You have not load kownledge base yet.")
@@ -441,7 +464,7 @@ def ask_file(file_ask_history_list:list,
                                                     )
             
             # get chain's result
-            result = qa({"question": question_prompt,"chat_history": chat_history_re})
+            result = qa.invoke({"question": question_prompt,"chat_history": chat_history_re})
             chat_memory.save_context({"input": result["question"]},{"output": result["answer"]})
 
         usr_prob = result["question"]
@@ -456,13 +479,18 @@ def ask_file(file_ask_history_list:list,
 
 def summarize_file(split_docs,chatbot,model_choice,sum_type):
     llm = AzureChatOpenAI(model=model_choice,
-                    openai_api_type="azure",
-                    deployment_name=model_choice, # <----------设置选择模型的时候修改这里
+                    openai_api_type=os.getenv('API_TYPE'),
+                    azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                    openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                    openai_api_version=os.getenv('API_VERSION'),
+                    # eployment_name=os.getenv('AZURE_OAI_ENDPOINT')+ "deployments/" +'gpt-35-turbo', 
+                    deployment_name=model_choice,
                     temperature=0.7)
     # 创建总结链
     chain = load_summarize_chain(llm, chain_type=sum_type, verbose=True)
     
     # 执行总结链
+    # 这里的 run 方法在 langchain v0.1 可用，v0.2将废除
     summarize_result = chain.run(split_docs[-1])
 
     # 构造 chatbox 格式

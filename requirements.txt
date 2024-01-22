@@ -1,7 +1,10 @@
 gradio==3.47.1
-langchain==0.0.299
+langchain==0.1.0
+langchain_community==0.0.9
+langchain_core==0.1.7
+langchain_openai==0.0.2
 Markdown==3.4.1
-openai==0.27.10
+openai==1.6.1
 pandas==1.5.3
 python-dotenv==1.0.0
 chromadb==0.4.11
@@ -9,7 +12,10 @@ chroma-hnswlib==0.7.3
 unstructured==0.10.16
 unstructured-inference==0.5.31
 unstructured.pytesseract==0.3.12
-tiktoken==0.5.1
+tiktoken==0.5.2
 pdf2image==1.16.3
+Pillow==10.0.0
+Pillow==10.2.0
 pydantic==1.10.12
+Requests==2.31.0
 tabulate==0.9.0

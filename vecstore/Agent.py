@@ -1,7 +1,7 @@
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMRequestsChain, LLMChain
-from langchain.chat_models import AzureChatOpenAI
-from openai.error import InvalidRequestError
+from langchain_community.chat_models import AzureChatOpenAI
+from openai import BadRequestError
 import gradio as gr
 from pydantic.error_wrappers import ValidationError
 
@@ -42,5 +42,5 @@ def url_request_chain(model:str,
         # print(response['output'])
         chat_bot.append([f"请为我总结这篇文章:{url}",response['output']])
         return chat_bot
-    except InvalidRequestError:
+    except BadRequestError:
         raise gr.Error("待总结的文章长度已经超过了模型能够承受的最大长度！请选择支持更长上下文的模型！")    
