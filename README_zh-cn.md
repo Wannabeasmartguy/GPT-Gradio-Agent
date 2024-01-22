@@ -17,6 +17,24 @@
 
 ![v0 7 RAG 界面](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/705c8f58-d46b-487a-b4d5-9cc38397397f)
 
+**v0.9.0 新增**：你现在不仅可以查看知识库的文件目录，还可以查看知识库内的具体内容，并且了解具体的分块情况。
+
+![detail of knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/e70154ac-b6a7-451f-b6fe-d42ce31f48e1)
+
+点击勾选框，就可以查看分块的具体信息：
+
+![detail of knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/d8e94529-ad52-4d28-becf-bddcce94d5d6)
+
+需要指出的是，当你加载了一个知识库后，它就会自动加载出它的具体信息。
+
+并且，它是一个独立的模块，这也就意味着，你可以同时在打开知识库 A 时，使用该模块查看知识库 B ！
+
+## Dall-E-3 图片生成器
+
+如果你有 Azure OpenAI API 的访问权限，那么不尝试一下 Dall-E-3 模型来生成图片真是太浪费了！基于其非常强大的图片生成能力，它可能会成为你的得力助手。
+
+![Dall-E-3](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/6b8c7e7c-8c75-41a0-b0ce-46f69bb7a9ef)
+
 # 快速开始
 
 ## GIT
@@ -29,13 +47,14 @@
 > 模型的**部署名称**，**一定要**和模型的原名称相同！
 > 比如部署 `'gpt-35-turbo'` 时，模型的部署名称也要填 `'gpt-35-turbo'`
 
-> 如果需要使用**最新的模型`gpt-4-1106-preview`**（也即在 OpenAI 发布会上公布的 `gpt-4-turbo` ），你应该将**部署名称设置为 `gpt-4-turbo-gr`**。
+2. 复制 `.env_example`并重命名为`.env`，修改环境变量：  
+    从 **v0.9.0** 开始，**环境变量与之前存在变化**：Langchain 对 OpenAI 和 Azure OpenAI 的环境变量设置存在冲突，无法在同时设置二者的变量时正常使用 Azure Openai ，这也意味着从该版本开始，暂时无法同时支持 OpenAI（我会在未来寻找兼容的方法），因此需要参照以下对环境变量进行设置。
+  > `AZURE_OAI_KEY`：Azure OpenAI 的 api key；  
+  > `AZURE_OAI_ENDPOINT`：Azure OpenAI 的提供的“终结点”；
+  > `API_VERSION`：Azure OpenAI 使用的 API 版本；**注意**：如果你想使用 Dall-E-3，请使用 `2023-12-01-preview` ，`2023-09-15-preview` 及更早的版本将于 2024年 4 月 2 日被废弃；
+  > `API_TYPE`：表示使用 Azure OpenAI 而非 OpenAI。
 
-2. 复制 `.env_example`并重命名为`.env`，修改环境变量`OPENAI_API_KEY`和`OPENAI_API_BASE`;  
-  > `OPENAI_API_KEY`：Azure OpenAI 的 api key；  
-  > `OPENAI_API_BASE`：Azure OpenAI 的提供的“终结点”
-
-1. 尽情享受吧！  
+3. 尽情享受吧！  
    在终端输入`python GPT-Gradio-Agent.py` 以运行代码。在终端内你可以看到本地 URL，它一般是 http://127.0.0.1:7860。
 
 ## Release 下载便携包
@@ -62,7 +81,7 @@
   
   - [ ] 支持 gpt-4-turbo 的图片输入（需要额外部署 Azure 的 Computer Vision 资源）
   
-  - [ ] 支持使用 Dall-E 3 生成图片
+  - [x] 支持使用 Dall-E 3 生成图片
 
 - [x] 对话管理 
 
