@@ -50,17 +50,16 @@ Then open a **Command Prompt (CMD)** in the folder where the codes are stored, a
 
 > The model **deployment name** **MUST** be the **same** as the **model name**!
 > For example, when deploying `'gpt-35-turbo'`, the deployment name of the model should also be `'gpt-35-turbo'`.
+> If you want to use Dall-E-3, you need to deploy it with the name `'dall-e-3'`.
 
-> If you want to use the **latest model `gpt-4-1106-preview`** (which is call gpt-4-turbo in OpenAI Conference) ,you should **use `'gpt-4-turbo-pr'` as the deployment name**.
-
-2. Copy `.env_example` and rename it to `.env`, change the environment variables:
+1. Copy `.env_example` and rename it to `.env`, change the environment variables:
     Starting from **v0.9.0**, there is a change in **environmental variables**: There is a conflict between Langchain's environment variable settings for OpenAI and Azure OpenAI, and it is not possible to use Azure Openai properly when both variables are set at the same time, which means that OpenAI cannot be supported at the same time from this version (I will look for a compatible method in the future), so you need to refer to the following environment variable settings. This also means that OpenAI cannot be supported from this release onwards (I will look for a way to make it compatible in the future), so you need to set the environment variables as follows.
   > `AZURE_OAI_KEY`: api key for Azure OpenAI;
   > `AZURE_OAI_ENDPOINT`: Azure OpenAI's provided "endpoint";
   > `API_VERSION`: the version of the API used by Azure OpenAI; **NOTE**: use `2023-12-01-preview` if you want to use Dall-E-3, `2023-09-15-preview` and earlier will be deprecated on April 2, 2024;
   > `API_TYPE`: indicates to use Azure OpenAI instead of OpenAI.
 
-3. Enjoy it!  
+1. Enjoy it!  
   Use `python GPT-Gradio-Agent.py` in your terminal to run the the codes.You can see the URL in your terminal, and the default local URL is http://127.0.0.1:7860.
 
 ## Release package 
