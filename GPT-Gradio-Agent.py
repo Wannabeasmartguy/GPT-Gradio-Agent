@@ -547,7 +547,9 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     '''
 
     search_btn.click(lambda:gr.HTML(visible=True),[],[search_result]
-                     ).then(rag_engine.query_function,inputs=[search_query,model_choice],outputs=[search_result])
+                     ).then(rag_engine.query_function,inputs=[search_query,model_choice],outputs=[search_result]
+                            ).then(lambda:gr.Textbox(value=""),[],[search_query])
+    # TODO:增加一个将 search_query 设置为 HTML 标题的处理函数 
 
 demo.queue().launch(inbrowser=True,debug=True,show_api=False
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"

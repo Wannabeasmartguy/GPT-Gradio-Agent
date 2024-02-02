@@ -82,5 +82,6 @@
     "The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered.":"The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered.",
     "RAG Search":"RAG Search",
     "Query Prompt":"Query Prompt",
-    "Search":"Search"
+    "Search":"Search",
+    "Please enter a question you would like to query.":"Please enter a question you would like to query."
 }

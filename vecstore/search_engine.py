@@ -1,11 +1,15 @@
 import os
 import requests
 import time
+import gradio as gr
+from gga_utils.common import *
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 from loguru import logger
 
 load_dotenv()
+
+i18n = I18nAuto()  
 
 _rag_query_text = """
 You are a large language AI assistant built by GGA AI. You are given a user question, and please write clean, concise and accurate answer to the question. You will be given a set of related contexts to the question, each starting with a reference number like [[citation:x]], where x is a number. Please use the context and cite the context at the end of each sentence if applicable.
@@ -84,6 +88,9 @@ class RAGSearchEngine():
         self.model = model
         if self.model == "gpt-35-turbo" or "gpt-35-turbo-16k":
             stop_words = None
+
+        if query == "" or None:
+            raise gr.Error(i18n("Please enter a question you would like to query."))
 
         try:
             contexts = search_with_bing(query)
