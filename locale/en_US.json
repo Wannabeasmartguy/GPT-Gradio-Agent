@@ -79,5 +79,8 @@
     "vivid":"vivid",
     "Starting...":"Starting...",
     "Requesting Dall-e-3 response...":"Requesting Dall-e-3 response...",
-    "The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered.":"The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered."
+    "The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered.":"The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered.",
+    "RAG Search":"RAG Search",
+    "Query Prompt":"Query Prompt",
+    "Search":"Search"
 }

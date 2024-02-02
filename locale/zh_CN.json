@@ -84,5 +84,8 @@
     "vivid":"生动",
     "Starting...":"启动中...",
     "Requesting Dall-e-3 response...":"请求 Dall-e-3 响应中...",
-    "The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered.":"您输入的提示实际上不被 Dall-E-3 接受，它将由 ChatGPT 进行润色和扩充后再输入到 Dall-E-3 中。"
+    "The Prompt you enter is not actually accepted by Dall-E-3, but will be embellished and amplified by ChatGPT before it is entered.":"您输入的提示实际上不被 Dall-E-3 接受，它将由 ChatGPT 进行润色和扩充后再输入到 Dall-E-3 中。",
+    "RAG Search":"RAG 搜索",
+    "Query Prompt":"查询指令",
+    "Search":"搜索"
 }

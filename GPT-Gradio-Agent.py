@@ -8,6 +8,7 @@ import pandas
 # Customized Modules
 from vecstore.vecstore import * 
 from vecstore.Agent import *
+from vecstore.search_engine import *
 from gga_utils.common import *
 from gga_utils.theme import *
 from vecstore.template import *
@@ -158,7 +159,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                 elem_id="history-select-dropdown",
             )
         with gr.Column(scale=4):
-            model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4","gpt-4-32k","gpt-4-turbo-pr"],
+            model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4","gpt-4-32k","gpt-4-turbo-preview"],
                                     value="gpt-35-turbo",
                                     label=i18n("Model"),
                                     info=i18n("Model info"),)
@@ -239,6 +240,14 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                            interactive=False,
                                            scale=1)
                 open_dir = gr.Button(value=i18n("Open output directory"))
+            with gr.Tab(i18n("RAG Search")):
+                search_result = gr.HTML(visible=False)
+                with gr.Row():
+                    search_query = gr.Textbox(label=i18n("Query Prompt"),
+                                              scale=3)
+                    search_btn = gr.Button(value=i18n("Search"),
+                                           scale=1)
+                    rag_engine = RAGSearchEngine()
 
         with gr.Column():
             with gr.Tab(i18n("Chat")):
@@ -532,6 +541,13 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                           outputs=[img,actual_prompt])
     
     open_dir.click(fn = open_dir_func)
+
+    '''
+    RAG-search
+    '''
+
+    search_btn.click(lambda:gr.HTML(visible=True),[],[search_result]
+                     ).then(rag_engine.query_function,inputs=[search_query,model_choice],outputs=[search_result])
 
 demo.queue().launch(inbrowser=True,debug=True,show_api=False
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"
