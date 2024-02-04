@@ -48,8 +48,10 @@ def dict_to_html(x:list[dict],file_name:str,advance_info:bool, small=True, api=F
                 info_list.append(doc_content)
     
     final_res = '\n\n'.join(info_list)
+
+    # 用字符串的css,把最终的 html 高度限制在一页内，通过上下滚动查看完整内容
     if small:
-        return "<small>" + final_res + "</small>"
+        return "<small height='500'>" + final_res + "</small>"
     else:
         return final_res
 
@@ -68,19 +70,33 @@ def text_to_html(x, api=False):
     if api:
         return x
     return """
-<style>
-      pre {
-        overflow-x: auto;
-        font-family: "微软雅黑", sans-serif;
-        font-size: 14px;
-        white-space: pre-wrap;
-        white-space: -moz-pre-wrap;
-        white-space: -pre-wrap;
-        white-space: -o-pre-wrap;
-        word-wrap: break-word;
-      }
-    </style>
-<pre>
-%s
-</pre>
+            <style>
+                .card-container {
+                        display: flex;
+                        flex-wrap: wrap;
+                    }
+                .card {
+                    overflow-x: auto;
+                    overflow-y: auto;
+                    font-family: "微软雅黑", sans-serif;
+                    font-size: 16px;
+                    height: 200px;
+                    width: 800px; 
+                    white-space: pre-wrap;
+                    white-space: -moz-pre-wrap;
+                    white-space: -pre-wrap;
+                    white-space: -o-pre-wrap;
+                    word-wrap: break-word;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin: 10px;
+                    background-color: #f9f9f9;
+                    transition: box-shadow 0.3s;
+                    box-sizing: border-box; /* 确保宽度包括边框和内边距 */
+                }
+                </style>
+                <p class="card">
+                %s
+                </p>
 """ % x
