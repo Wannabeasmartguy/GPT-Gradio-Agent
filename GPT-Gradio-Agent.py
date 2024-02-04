@@ -241,7 +241,12 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                            scale=1)
                 open_dir = gr.Button(value=i18n("Open output directory"))
             with gr.Tab(i18n("RAG Search")):
+                search_result_title = gr.HTML(value=search_Answer_icon,
+                                              visible=False)
                 search_result = gr.HTML(visible=False)
+                search_source_title = gr.HTML(value=search_quote_icon,
+                                              visible=False)
+                search_source = gr.HTML(visible=False)
                 with gr.Row():
                     search_query = gr.Textbox(label=i18n("Query Prompt"),
                                               scale=3)
@@ -546,9 +551,22 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     RAG-search
     '''
 
-    search_btn.click(lambda:gr.HTML(visible=True),[],[search_result]
-                     ).then(rag_engine.query_function,inputs=[search_query,model_choice],outputs=[search_result]
-                            ).then(lambda:gr.Textbox(value=""),[],[search_query])
+    search_btn.click(
+        lambda:gr.HTML(visible=True),[],[search_result_title]
+    ).then(
+        lambda:gr.HTML(visible=True),[],[search_result]
+    ).then(
+        lambda:gr.HTML(visible=True),[],[search_source]
+    ).then(
+        lambda:gr.HTML(value=""),[],[search_source]
+    ).then(
+        rag_engine.query_function,
+        inputs=[search_query,model_choice],
+        outputs=[search_result]
+    ).then(
+        rag_engine.gen_html_page,
+        outputs=[search_source]
+    ).then(lambda:gr.Textbox(value=""),[],[search_query])
     # TODO:增加一个将 search_query 设置为 HTML 标题的处理函数 
 
 demo.queue().launch(inbrowser=True,debug=True,show_api=False
