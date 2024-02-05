@@ -109,7 +109,6 @@ Remember, don't blindly repeat the contexts verbatim. And here is the user quest
 
 stop_words = [
     "<|im_end|>",
-    "[End]",
     "[end]",
     "\nReferences:\n",
     "\nSources:\n",
@@ -288,6 +287,7 @@ class RAGSearchEngine():
         self.try_times = 10
         self.wait_time = 0.5
         self.contexts = []
+        self.stop_words = stop_words
         
     def query_function(self,
                        query:str,
@@ -300,6 +300,8 @@ class RAGSearchEngine():
         self.model = model
         if self.model == "gpt-35-turbo" or "gpt-35-turbo-16k":
             stop_words = None
+        else:
+            stop_words = self.stop_words
 
         if query == "" or None:
             raise gr.Error(i18n("Please enter a question you would like to query."))

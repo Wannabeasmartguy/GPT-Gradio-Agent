@@ -22,11 +22,11 @@ Very efficient!
 
 **v0.9.0 New**: You can now view not only the file directory of the knowledge base, but also the specific content in the knowledge base, and understand the specific chunks.
 
-![knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/883315f0-b2f0-4c39-acc9-6f4104fe9609)
+![knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/adec4553-8815-419b-9b72-445bd6176c63)
 
 Click the checkbox to view the specific information of the block:
 
-![detail of knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/d8e94529-ad52-4d28-becf-bddcce94d5d6)
+![detail of knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/1c29dcd7-aa0b-4c87-820d-2fdee57e4144)
 
 It's important to note that when you load a knowledge base, it will automatically load out its specific information.
 
@@ -37,6 +37,12 @@ Also, it's a stand-alone module, which means you can use it to view Knowledge Ba
 If you have access to the Azure OpenAI API, it's a waste not to try the Dall-E-3 model to generate images!
 
 ![Dall-E-3](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/6b8c7e7c-8c75-41a0-b0ce-46f69bb7a9ef)
+
+## RAG Search
+
+By harnessing the extensive knowledge of search engines (Bing Search) in conjunction with the exceptional capabilities of LLM, you can obtain precise answers and a wide range of references. It's inspired by [search_with_lepton](https://github.com/leptonai/search_with_lepton)
+
+![search with gpt4](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/89cdcb56-82c1-4b2c-a2ef-60a63bc8dfe0)
 
 # Get Started
 
@@ -52,14 +58,16 @@ Then open a **Command Prompt (CMD)** in the folder where the codes are stored, a
 > For example, when deploying `'gpt-35-turbo'`, the deployment name of the model should also be `'gpt-35-turbo'`.
 > If you want to use Dall-E-3, you need to deploy it with the name `'dall-e-3'`.
 
-1. Copy `.env_example` and rename it to `.env`, change the environment variables:
+2. Copy `.env_example` and rename it to `.env`, change the environment variables:
     Starting from **v0.9.0**, there is a change in **environmental variables**: There is a conflict between Langchain's environment variable settings for OpenAI and Azure OpenAI, and it is not possible to use Azure Openai properly when both variables are set at the same time, which means that OpenAI cannot be supported at the same time from this version (I will look for a compatible method in the future), so you need to refer to the following environment variable settings. This also means that OpenAI cannot be supported from this release onwards (I will look for a way to make it compatible in the future), so you need to set the environment variables as follows.
   > `AZURE_OAI_KEY`: api key for Azure OpenAI;
   > `AZURE_OAI_ENDPOINT`: Azure OpenAI's provided "endpoint";
   > `API_VERSION`: the version of the API used by Azure OpenAI; **NOTE**: use `2023-12-01-preview` if you want to use Dall-E-3, `2023-09-15-preview` and earlier will be deprecated on April 2, 2024;
   > `API_TYPE`: indicates to use Azure OpenAI instead of OpenAI.
 
-1. Enjoy it!  
+  > If you want to use RAG Search, set `BING_SUBSCRIPTION_KEY` and you can get access to related free resources in Azure with 1000 free calls per month.
+
+3. Enjoy it!  
   Use `python GPT-Gradio-Agent.py` in your terminal to run the the codes.You can see the URL in your terminal, and the default local URL is http://127.0.0.1:7860.
 
 ## Release package 
@@ -105,6 +113,10 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
     - [x] List citation sources
   
   - [x] Estimated cost of embedding files
+
+- [x] RAG Web Search
+
+  - [x] Support Bing Search
 
 - [x] **Web requester(By prompts)**
 

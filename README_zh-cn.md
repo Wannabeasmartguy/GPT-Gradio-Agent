@@ -19,11 +19,11 @@
 
 **v0.9.0 新增**：你现在不仅可以查看知识库的文件目录，还可以查看知识库内的具体内容，并且了解具体的分块情况。
 
-![knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/883315f0-b2f0-4c39-acc9-6f4104fe9609)
+![knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/adec4553-8815-419b-9b72-445bd6176c63)
 
 点击勾选框，就可以查看分块的具体信息：
 
-![detail of knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/d8e94529-ad52-4d28-becf-bddcce94d5d6)
+![detail of knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/1c29dcd7-aa0b-4c87-820d-2fdee57e4144)
 
 需要指出的是，当你加载了一个知识库后，它就会自动加载出它的具体信息。
 
@@ -34,6 +34,12 @@
 如果你有 Azure OpenAI API 的访问权限，那么不尝试一下 Dall-E-3 模型来生成图片真是太浪费了！基于其非常强大的图片生成能力，它可能会成为你的得力助手。
 
 ![Dall-E-3](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/6b8c7e7c-8c75-41a0-b0ce-46f69bb7a9ef)
+
+## RAG 搜索
+
+通过利用搜索引擎（目前支持Bing）的广泛知识和 LLM 的卓越功能，您可以获得精确的答案和广泛的参考资料。它的灵感来自 [search_with_lepton](https://github.com/leptonai/search_with_lepton)。
+
+![search with gpt4](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/89cdcb56-82c1-4b2c-a2ef-60a63bc8dfe0)
 
 # 快速开始
 
@@ -54,6 +60,8 @@
   > `AZURE_OAI_ENDPOINT`：Azure OpenAI 的提供的“终结点”；
   > `API_VERSION`：Azure OpenAI 使用的 API 版本；**注意**：如果你想使用 Dall-E-3，请使用 `2023-12-01-preview` ，`2023-09-15-preview` 及更早的版本将于 2024年 4 月 2 日被废弃；
   > `API_TYPE`：表示使用 Azure OpenAI 而非 OpenAI。
+
+  > 如果你要使用 RAG Search，请设置 `BING_SUBSCRIPTION_KEY` ，你可以在 Azure 中获得相关的免费资源，每月可以有 1000 次的免费调用机会。
 
 3. 尽情享受吧！  
    在终端输入`python GPT-Gradio-Agent.py` 以运行代码。在终端内你可以看到本地 URL，它一般是 http://127.0.0.1:7860。
@@ -99,6 +107,10 @@
     - [x] 显示引用来源
   
   - [x] 预估嵌入文件的费用
+
+- [x] RAG 强化搜索引擎搜索
+  
+  - [x] 支持 Bing 搜索引擎
 
 - [x] 网页内容检索及总结（通过提示词）
 
