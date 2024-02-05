@@ -51,7 +51,21 @@ def dict_to_html(x:list[dict],file_name:str,advance_info:bool, small=True, api=F
 
     # 用字符串的css,把最终的 html 高度限制在一页内，通过上下滚动查看完整内容
     if small:
-        return "<small height='500'>" + final_res + "</small>"
+        return f"""
+            <style>
+                .small-container {{
+                    height: 650px;
+                    overflow-x: auto;
+                    overflow-y: auto;
+                }}
+            </style>
+            <div class="small-container">
+                <small>
+                    {final_res}
+                </small>
+            </div>
+
+            """
     else:
         return final_res
 
