@@ -159,7 +159,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                 elem_id="history-select-dropdown",
             )
         with gr.Column(scale=4):
-            model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4","gpt-4-32k","gpt-4-turbo-preview"],
+            model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4","gpt-4-32k","gpt-4-1106-preview","gpt-4-vision-preview"],
                                     value="gpt-35-turbo",
                                     label=i18n("Model"),
                                     info=i18n("Model info"),)
