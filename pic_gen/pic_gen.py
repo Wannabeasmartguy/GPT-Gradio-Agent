@@ -91,7 +91,13 @@ def generate_dall3_image(prompt:str,
     json_response = json.loads(result.model_dump_json())
 
     # Set the directory for the stored image
-    image_dir = os.path.join(os.curdir, r'.\output\pic')
+    # 如果不存在 r'.\output\pic' 路径，就创建它
+    try:
+        image_dir = os.path.join(os.curdir, r'.\output\pic')
+    except:
+        os.makedirs(image_dir)
+        image_dir = os.path.join(os.curdir, r'.\output\pic')
+
 
     # If the directory doesn't exist, create it
     if not os.path.isdir(image_dir):
