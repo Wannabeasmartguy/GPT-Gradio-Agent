@@ -29,7 +29,9 @@ load_dotenv()
 # openai.api_type = os.getenv('OPENAI_API_TYPE')
 
 # initialize the embedding model setting 
-embedding_model = "text-embedding-ada-002"
+openai_embedding_model = ["text-embedding-ada-002"]
+local_embedding_model = ['bge-base-zh-v1.5','bge-base-en-v1.5',
+                         'bge-large-zh-v1.5','bge-large-en-v1.5']
 
 # 初始化主题
 set_theme = adjust_theme()
@@ -282,9 +284,26 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                 sum_result = gr.State()
                 # set a element to aviod indexerror
                 file_answer = gr.State(['0']) 
-                
+                embedding_model_type = gr.Dropdown(choices=['Hugging Face(local)', 'OpenAI'], 
+                                               value='Hugging Face(local)', 
+                                               label=i18n("Embedding Model Type"),
+                                               interactive=True)
+                embedding_model = gr.Dropdown(choices=local_embedding_model,
+                                              value=local_embedding_model[0],
+                                              label=i18n("Embedding Model"),
+                                              interactive=True,
+                                              visible=True,
+                                              allow_custom_value=True)
+                def get_select_value(evt: gr.SelectData):
+                    if evt.value == 'OpenAI':
+                        return gr.Dropdown(choices=openai_embedding_model,
+                                           value=openai_embedding_model[0])
+                    elif evt.value == 'Hugging Face(local)':
+                        return gr.Dropdown(choices=local_embedding_model,
+                                           value=local_embedding_model[0])
+                embedding_model_type.select(get_select_value,outputs=[embedding_model])
                 with gr.Column():
-                    with gr.Accordion(label=i18n("RAG Basic Operation"),
+                    with gr.Accordion(label=i18n("RAG Basic Setting"),
                                       elem_id="Accordion"):
                         with gr.Group():
                             file = gr.File(label=i18n("The file you want to chat with"),
@@ -408,7 +427,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
 
     # Knowledge base refresh button event
     refresh_kb_info.click(load_vectorstore,
-                          inputs=[kb_path],
+                          inputs=[kb_path,embedding_model_type,embedding_model],
                           outputs=[kb_vector_content,kb_file_list]
                           ).success(get_chroma_info,
                                     [kb_path,kb_file_list,advance_kb_info],
@@ -516,20 +535,20 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     summarize.click(lambda: gr.Textbox(value=''), [],[message])
 
     # Manage vectorstore event
-    create_vec_but.click(create_vectorstore,inputs=[vector_path])
+    create_vec_but.click(create_vectorstore,inputs=[vector_path,embedding_model_type,embedding_model])
     load_vec.click(load_vectorstore,
-                   inputs=[vector_path],
+                   inputs=[vector_path,embedding_model_type,embedding_model],
                    outputs=[vector_content,file_list]
                    ).then(lambda vector_path:gr.Textbox(value=vector_path),
                           [vector_path],
                           [kb_path]
                           ).then(load_vectorstore,
-                                 [vector_path],
+                                 [vector_path,embedding_model_type,embedding_model],
                                  [kb_vector_content,kb_file_list])
     
     #file_list.change(refresh_file_list,inputs=[vector_content],outputs=file_list)
-    add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp,file],outputs=[vector_content,file_list]).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
-    delete_file.click(delete_flie_in_vectorstore,inputs=file_list).then(load_vectorstore,inputs=[vector_path],outputs=[vector_content,file_list])
+    add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp,embedding_model_type,embedding_model,file],outputs=[vector_content,file_list]).then(load_vectorstore,inputs=[vector_path,embedding_model_type,embedding_model],outputs=[vector_content,file_list])
+    delete_file.click(delete_flie_in_vectorstore,inputs=file_list).then(load_vectorstore,inputs=[vector_path,embedding_model_type,embedding_model],outputs=[vector_content,file_list])
 
     # Agent button event
     sum_url_button.click(url_request_chain,

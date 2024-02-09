@@ -84,5 +84,8 @@
     "Query Prompt":"Query Prompt",
     "Search":"Search",
     "Please enter a question you would like to query.":"Please enter a question you would like to query.",
-    "BING_SUBSCRIPTION_KEY and BING_SEARCH_URL cannot be empty.":"BING_SUBSCRIPTION_KEY and BING_SEARCH_URL cannot be empty."
+    "BING_SUBSCRIPTION_KEY and BING_SEARCH_URL cannot be empty.":"BING_SUBSCRIPTION_KEY and BING_SEARCH_URL cannot be empty.",
+    "RAG Basic Setting":"RAG Basic Setting",
+    "Embedding Model Type":"Embedding Model Type",
+    "Embedding Model":"Embedding Model"
 }

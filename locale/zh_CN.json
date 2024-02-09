@@ -89,5 +89,8 @@
     "Query Prompt":"查询指令",
     "Search":"搜索",
     "Please enter a question you would like to query.":"请输入一个你想要查询的问题。",
-    "BING_SUBSCRIPTION_KEY and BING_SEARCH_URL cannot be empty.":"环境变量 BING_SUBSCRIPTION_KEY 和 BING_SEARCH_URL 不能为空。"
+    "BING_SUBSCRIPTION_KEY and BING_SEARCH_URL cannot be empty.":"环境变量 BING_SUBSCRIPTION_KEY 和 BING_SEARCH_URL 不能为空。",
+    "RAG Basic Setting":"RAG 基本设置",
+    "Embedding Model Type":"嵌入模型类型",
+    "Embedding Model":"嵌入模型"
 }

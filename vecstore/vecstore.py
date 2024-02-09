@@ -4,6 +4,11 @@ from langchain_openai.embeddings import AzureOpenAIEmbeddings
 from langchain_openai.chat_models import AzureChatOpenAI
 from langchain.chains import RetrievalQA,ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
+from langchain_community.embeddings.sentence_transformer import (
+    SentenceTransformerEmbeddings,
+)
+from huggingface_hub import snapshot_download
+from typing import Literal
 from openai import BadRequestError
 import chromadb
 from openai import AzureOpenAI
@@ -252,22 +257,37 @@ def rst_mem(chat_his:list):
     return chat_his
 
 # Manipulating Vector Databases
-def create_vectorstore(persist_vec_path:str):
+# TODO: 增加了本地模型后要改这里，增加一个/两个Embedding参数，用于确认创建的知识库的Embedding模型
+def create_vectorstore(persist_vec_path:str,
+                       embedding_model_type:Literal['OpenAI','Hugging Face(local)'],
+                       embedding_model:str):
     '''
     Create vectorstore.
     '''
     if persist_vec_path == "":
         raise gr.Error("Please provide a path to persist the vectorstore.")
     
+    local_embedding_model = 'embedding model/'+embedding_model
+
     import os
     if os.path.isabs(persist_vec_path):
-        embeddings = AzureOpenAIEmbeddings(
-                                            openai_api_type=os.getenv('API_TYPE'),
-                                            azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
-                                            openai_api_key=os.getenv('AZURE_OAI_KEY'),
-                                            openai_api_version=os.getenv('API_VERSION'),
-                                            azure_deployment="text-embedding-ada-002",
-                                            )
+        if embedding_model_type == 'OpenAI':
+            embeddings = AzureOpenAIEmbeddings(
+                                                openai_api_type=os.getenv('API_TYPE'),
+                                                azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                                                openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                                                openai_api_version=os.getenv('API_VERSION'),
+                                                azure_deployment="text-embedding-ada-002",
+                                                )
+        elif embedding_model_type == 'Hugging Face(local)':
+            try:
+                embeddings = SentenceTransformerEmbeddings(local_embedding_model)
+            except:
+                # 如果 embedding model 的前三个字母是 bge ,则在 repo_id 前加上 BAAI/
+                if embedding_model[:3] == 'bge':
+                    snapshot_download(repo_id="BAAI/"+embedding_model,
+                                      local_dir=local_embedding_model)
+                    embeddings = SentenceTransformerEmbeddings(model_name=local_embedding_model)
 
         # global vectorstore
         vectorstore = chroma.Chroma(persist_directory=persist_vec_path,embedding_function=embeddings)
@@ -279,20 +299,39 @@ def create_vectorstore(persist_vec_path:str):
 
 def add_file_in_vectorstore(persist_vec_path:str, 
                             split_docs:list,
+                            embedding_model_type:str,
+                            local_embedding_model:str,
                             file_obj,   # get it from 'file' (gr.file)
-                            progress=gr.Progress()
+                            progress=gr.Progress(),
                             ):
     '''
     Add file to vectorstore.
     '''
+
+    embedding_model_path = 'embedding model/'+local_embedding_model
 
     if file_obj == None:
         raise gr.Error("You haven't chosen a file yet.")
 
     if persist_vec_path:
         global vectorstore
-        vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
-                             embedding_function=AzureOpenAIEmbeddings())
+        if embedding_model_type == 'OpenAI':
+            vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
+                                embedding_function=AzureOpenAIEmbeddings())
+        elif embedding_model_type == 'Hugging Face(local)':
+            try:
+                embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
+                vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
+                                            embedding_function=embeddings)
+            except:
+                # 如果没下载模型，则重新下载模型
+                if local_embedding_model[:3] == 'bge':
+                    snapshot_download(repo_id="BAAI/"+local_embedding_model,
+                                      local_dir=embedding_model_path)
+                    embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
+                    vectorstore = chroma.Chroma(persist_directory=persist_vec_path,
+                                                embedding_function=embeddings)
+
     else:
         raise gr.Error("You haven't chosen a knowledge base yet.")
     
@@ -361,21 +400,38 @@ def delete_flie_in_vectorstore(file_list,
     return
 
 
-def load_vectorstore(persist_vec_path:str):
+def load_vectorstore(persist_vec_path:str,
+                     embedding_model_type:Literal['OpenAI','Hugging Face(local)'],
+                     embedding_model:str):
     '''
     Load vectorstore, and trun the files' name to dataframe.
     '''
     global vectorstore
+    embedding_model_path = 'embedding model/'+embedding_model
 
     if persist_vec_path:
-        vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
-                             embedding_function=AzureOpenAIEmbeddings(
-                                            openai_api_type=os.getenv('API_TYPE'),
-                                            azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
-                                            openai_api_key=os.getenv('AZURE_OAI_KEY'),
-                                            openai_api_version=os.getenv('API_VERSION'),
-                                            azure_deployment="text-embedding-ada-002",
-                                    ))
+        if embedding_model_type == 'OpenAI':
+            vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
+                                embedding_function=AzureOpenAIEmbeddings(
+                                                openai_api_type=os.getenv('API_TYPE'),
+                                                azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                                                openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                                                openai_api_version=os.getenv('API_VERSION'),
+                                                azure_deployment="text-embedding-ada-002",
+                                        ))
+        elif embedding_model_type == 'Hugging Face(local)':
+            try:
+                embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
+                vectorstore = chroma.Chroma(persist_directory=persist_vec_path,
+                                            embedding_function=embeddings)
+            except:
+                if embedding_model[:3] == 'bge':
+                    snapshot_download(repo_id="BAAI/"+embedding_model,
+                                      local_dir=embedding_model_path)
+                    embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
+                    vectorstore = chroma.Chroma(persist_directory=persist_vec_path,
+                                                embedding_function=embeddings)
+
     else:
         raise gr.Error(i18n("You didn't provide an absolute path to the knowledge base"))
 
