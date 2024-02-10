@@ -6,6 +6,7 @@
 /test.py
 /test.ipynb
 /embedding model/bge-base-zh-v1.5
+/embedding model/bge-base-en-v1.5
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

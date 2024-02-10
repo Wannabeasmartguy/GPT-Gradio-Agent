@@ -325,6 +325,7 @@ def add_file_in_vectorstore(persist_vec_path:str,
                                             embedding_function=embeddings)
             except:
                 # 如果没下载模型，则重新下载模型
+                progress(0.3, "Downloading embedding model...")
                 if local_embedding_model[:3] == 'bge':
                     snapshot_download(repo_id="BAAI/"+local_embedding_model,
                                       local_dir=embedding_model_path)
@@ -345,7 +346,7 @@ def add_file_in_vectorstore(persist_vec_path:str,
     
     vct_store = vectorstore.get()
     unique_sources = set(vct_store['metadatas'][i]['source'] for i in range(len(vct_store['metadatas'])))
-    progress(0.3, desc="Updating knowledge base...")
+    progress(0.6, desc="Updating knowledge base...")
     
     # List of names of files in kownledge base
     vec_file_names = [source.split('/')[-1].split('\\')[-1] for source in unique_sources]
@@ -402,7 +403,8 @@ def delete_flie_in_vectorstore(file_list,
 
 def load_vectorstore(persist_vec_path:str,
                      embedding_model_type:Literal['OpenAI','Hugging Face(local)'],
-                     embedding_model:str):
+                     embedding_model:str,
+                     progress=gr.Progress()):
     '''
     Load vectorstore, and trun the files' name to dataframe.
     '''
@@ -426,16 +428,19 @@ def load_vectorstore(persist_vec_path:str,
                                             embedding_function=embeddings)
             except:
                 if embedding_model[:3] == 'bge':
+                    progress(0.1, "Downloading BGE model...")
                     snapshot_download(repo_id="BAAI/"+embedding_model,
                                       local_dir=embedding_model_path)
                     embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
                     vectorstore = chroma.Chroma(persist_directory=persist_vec_path,
                                                 embedding_function=embeddings)
+                    progress(0.3, "Model download completed.")
 
     else:
         raise gr.Error(i18n("You didn't provide an absolute path to the knowledge base"))
 
     try:
+        progress(0.5, "Loading knowledge base...")
         vct_store = vectorstore.get()
         unique_sources = set(vct_store['metadatas'][i]['source'] for i in range(len(vct_store['metadatas'])))
 
@@ -446,7 +451,7 @@ def load_vectorstore(persist_vec_path:str,
         file_names = [source.split('/')[-1].split('\\')[-1] for source in unique_sources]
 
         df = pd.DataFrame(file_names, columns=['文件名称'])
-
+        progress(1, "Knowledge base loaded.")
         gr.Info(i18n("Successfully load kowledge base."))
         return df,gr.Dropdown(value=file_names[0],choices=file_names)
     except IndexError:
