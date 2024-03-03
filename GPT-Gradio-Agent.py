@@ -40,6 +40,8 @@ set_theme = adjust_theme()
 
 # Initialize language
 i18n = I18nAuto()  
+# Initialize knowledge base
+kb = KnowledgeBase()
 # <---------- set environmental parameters --------->
 
 def model_token_correct(model_choice:str):
@@ -321,18 +323,28 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                             scale=1)
                         with gr.Group():
                             vector_path = gr.Text(label=i18n("Knowledge base save path"),
-                                                info=i18n("Choose the folder you want to save, and PASTE THE ABSOLUTE PATH here"))
-                            with gr.Row():
-                                vector_content = gr.DataFrame(#label="Knowledge Base Document Catalog",
-                                                            value = pd.DataFrame(columns=['文件名称']),
-                                                            visible=False,
-                                                            interactive=False,
-                                                            )
-                                file_list = gr.Dropdown(interactive=True,
-                                                        # allow_custom_value=True,
-                                                        label=i18n("File list"))
+                                                info=i18n("Choose the folder you want to save, and PASTE THE ABSOLUTE PATH here"),
+                                                visible=False
+                                                )
+                            with gr.Accordion(label=i18n("Create/Delete Knowledge base"), open=False,
+                                              elem_id="Accordion_sec"):
+                                vector_name = gr.Textbox(label=i18n("Knowledge base name"),
+                                                         elem_id="text_sec")
+                                create_vec_but = gr.Button(value=i18n("Create a new knowledge base 📁"))
+                                # delete_vectorstore_button = gr.Button(value=i18n("Delete knowledge base"),
+                                #                                       variant='primary',
+                                #                                       elem_id="btn_danger")
+                            vector_list = gr.Dropdown(label=i18n("Knowledge base list"),
+                                                      choices=kb.knowledge_bases)
+                            vector_content = gr.DataFrame(#label="Knowledge Base Document Catalog",
+                                                        value = pd.DataFrame(columns=['文件名称']),
+                                                        visible=False,
+                                                        interactive=False,
+                                                        )
+                            file_list = gr.Dropdown(interactive=True,
+                                                    # allow_custom_value=True,
+                                                    label=i18n("File list"))
                         with gr.Column():
-                            create_vec_but = gr.Button(value=i18n("Create a new knowledge base 📁"))
                             load_vec = gr.Button(value=i18n("Load your 📁 "),variant='primary',elem_id="btn")
                             with gr.Row():
                                 add_file = gr.Button(value=i18n("Add it (The file uploaded) to 📁"),
@@ -535,16 +547,61 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     summarize.click(lambda: gr.Textbox(value=''), [],[message])
 
     # Manage vectorstore event
-    create_vec_but.click(create_vectorstore,inputs=[vector_path,embedding_model_type,embedding_model])
+    create_vec_but.click(
+        create_vec_in_specific_path,
+        inputs=[vector_name,embedding_model_type,embedding_model]
+    ).success(
+        create_kb_info_in_config,[vector_name,embedding_model_type,embedding_model],[]
+    ).success(
+        kb.reinitialize,[],[]
+    ).then(
+        lambda: gr.Textbox(value=None),[],[vector_name]
+    ).success(
+        lambda: gr.Dropdown(choices=kb.knowledge_bases),[],[vector_list]
+    )
+    
+    # 未找到解除知识库的占用的方法，搁置
+    # delete_vectorstore_button.click(delete_vec_in_specific_path,
+    #                                 inputs=[vector_list]
+    # ).then(lambda: gr.Dropdown(),[],[vector_list])
+
+    # TODO:后续将暂时隐藏或取消该按钮（原用于加载自定义路径的知识库）
+    # 新增一个用于刷新知识库列表的按钮（浏览器刷新无法真正刷新）
     load_vec.click(load_vectorstore,
                    inputs=[vector_path,embedding_model_type,embedding_model],
                    outputs=[vector_content,file_list]
-                   ).then(lambda vector_path:gr.Textbox(value=vector_path),
-                          [vector_path],
-                          [kb_path]
-                          ).then(load_vectorstore,
-                                 [vector_path,embedding_model_type,embedding_model],
-                                 [kb_vector_content,kb_file_list])
+    ).then(lambda vector_path:gr.Textbox(value=vector_path),
+           [vector_path],
+           [kb_path]
+    ).then(load_vectorstore,
+           [vector_path,embedding_model_type,embedding_model],
+           [kb_vector_content,kb_file_list])
+    
+    # 选择vector_list以后，先更新vector_path
+    vector_list.select(kb.get_persist_vec_path,
+                        [vector_list],
+                        [vector_path]
+    ).then(load_vectorstore,
+            inputs=[vector_path,embedding_model_type,embedding_model],
+            outputs=[vector_content,file_list]
+    ).then(lambda vector_path:gr.Textbox(value=vector_path),
+            [vector_path],
+            [kb_path]
+    ).then(load_vectorstore,
+            [vector_path,embedding_model_type,embedding_model],
+            [kb_vector_content,kb_file_list]
+    ).then(
+        # 然后更新知识库的嵌入类型和模型，并使锁死 embedding_model 
+        lambda vector_list:kb.get_embedding_model(vector_list),
+        [vector_list],
+        [embedding_model_type,embedding_model]
+    ).then(
+        lambda:gr.Dropdown(interactive=False),
+        outputs=[embedding_model_type],
+    ).then(
+        lambda:gr.Dropdown(interactive=False),
+        outputs=[embedding_model]
+    )
     
     #file_list.change(refresh_file_list,inputs=[vector_content],outputs=file_list)
     add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp,embedding_model_type,embedding_model,file],outputs=[vector_content,file_list]).then(load_vectorstore,inputs=[vector_path,embedding_model_type,embedding_model],outputs=[vector_content,file_list])

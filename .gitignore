@@ -6,6 +6,10 @@
 /test.py
 /test.ipynb
 /embedding model/bge-base-zh-v1.5
+/embedding_config.json
+/knowledge base/test_vec
+/knowledge base/test_vec_local
+/knowledge base/test_vec_local - 副本
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

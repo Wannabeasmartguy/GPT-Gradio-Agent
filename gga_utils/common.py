@@ -176,12 +176,11 @@ def get_last_conversation_name():
         last_name = list(data.keys())[-1]
         return last_name
     
-def get_selected_conversation_content(name:str):
+def get_selected_conversation_content(name:str,
+                                      filename = 'chat_cache.json'):
     '''
     用于获取 Json 文件中的指定对话名称的对话内容，用于更新chatbot
     '''
-    filename = 'chat_cache.json'
-
     # 检查 JSON 文件是否存在
     if os.path.isfile(filename):
         # 如果文件存在，则读取文件内容并解析为字典

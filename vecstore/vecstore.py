@@ -16,6 +16,7 @@ import gradio as gr
 import pandas as pd
 import tiktoken
 import gradio as gr
+import json
 from gga_utils.common import *
 from gga_utils.vec_utils import *
 import functools
@@ -257,7 +258,6 @@ def rst_mem(chat_his:list):
     return chat_his
 
 # Manipulating Vector Databases
-# TODO: 增加了本地模型后要改这里，增加一个/两个Embedding参数，用于确认创建的知识库的Embedding模型
 def create_vectorstore(persist_vec_path:str,
                        embedding_model_type:Literal['OpenAI','Hugging Face(local)'],
                        embedding_model:str):
@@ -281,7 +281,7 @@ def create_vectorstore(persist_vec_path:str,
                                                 )
         elif embedding_model_type == 'Hugging Face(local)':
             try:
-                embeddings = SentenceTransformerEmbeddings(local_embedding_model)
+                embeddings = SentenceTransformerEmbeddings(model_name=local_embedding_model)
             except:
                 # 如果 embedding model 的前三个字母是 bge ,则在 repo_id 前加上 BAAI/
                 if embedding_model[:3] == 'bge':
@@ -297,6 +297,60 @@ def create_vectorstore(persist_vec_path:str,
     
     return vectorstore
 
+def create_vec_in_specific_path(persist_vec_name:str,
+                                embedding_model_type:str,
+                                embedding_model:str,
+                                progress=gr.Progress()):
+    '''在默认路径下创建指定名称的知识库。'''
+    progress(0.2, desc="正在创建本地文件夹...")
+    vec_path = os.path.join(os.getcwd(), "knowledge base", persist_vec_name)
+    if os.path.exists(vec_path) is False:
+        os.makedirs(vec_path)
+    progress(0.4, desc="正在创建知识库...")
+    create_vectorstore(vec_path,embedding_model_type,embedding_model)
+    progress(1, desc="知识库创建完成")
+    gr.Info(i18n("Create successfully!"))
+
+def delete_vec_in_specific_path(persist_vec_name:str):
+    '''删除默认路径下指定名称的知识库'''
+    import shutil
+    # 删除文件夹及其中的全部文件
+    tobe_delete_path = os.path.join(os.getcwd(), "knowledge base", persist_vec_name)
+    #TODO: 直接删除会有知识库被占用，无法直接删除的问题，搁置
+    shutil.rmtree(tobe_delete_path)
+    gr.Info(I18nAuto("Delete knowledge base successfully."))
+
+'''
+操作embedding_config.json
+'''
+def create_kb_info_in_config(persist_vec_name:str,
+                             embedding_model_type:str,
+                             embedding_model:str):
+    import time
+    '''在embedding_config.json中创建指定知识库信息'''
+    with open(os.path.join(os.getcwd(), "embedding_config.json"), "r", encoding="utf-8") as f:
+        config_dict = json.load(f)
+    kb_config =  {
+                    "embedding_model_type": embedding_model_type,
+                    "embedding_model": embedding_model
+                }
+    config_dict[persist_vec_name] = kb_config
+    with open(os.path.join(os.getcwd(), "embedding_config.json"), "w", encoding="utf-8") as f:
+        json.dump(config_dict, f, ensure_ascii=False, indent=4)
+    time.sleep(0.5)
+
+def delete_kb_info_in_config(persist_vec_name:str):
+    '''删除embedding_config.json中的指定知识库信息'''
+    with open(os.path.join(os.getcwd(), "embedding_config.json"), "r", encoding="utf-8") as f:
+        config_dict = json.load(f)
+    config_dict.pop(persist_vec_name)
+    with open(os.path.join(os.getcwd(), "embedding_config.json"), "w", encoding="utf-8") as f:
+        json.dump(config_dict, f, ensure_ascii=False, indent=4)
+
+def reset_kb():
+    global kb
+    kb = KnowledgeBase()
+    
 def add_file_in_vectorstore(persist_vec_path:str, 
                             split_docs:list,
                             embedding_model_type:str,
@@ -399,6 +453,72 @@ def delete_flie_in_vectorstore(file_list,
         raise gr.Error('File does not exist in vectorstore.')
     return
 
+class KnowledgeBase:
+    '''
+    用于管理本地知识库的类
+    '''
+    def __init__(self):
+        '''
+        初始化时，先读取本地的`embedding_config.json`,该json的结构如下
+        {
+            "Knowledge_base_a": {
+                "embedding_model_type": "OpenAI",
+                "embedding_model": "text-embedding-ada-002"
+            },
+            "Knowledge_base_b":{
+                "embedding_model_type": "Hugging Face(local)",
+                "embedding_model": "bge-base-zh-v1.5"
+            }
+        }
+        '''
+        if os.path.exists("embedding_config.json"):
+            with open("embedding_config.json", "r", encoding='utf-8') as f:
+                self.embedding_config = json.load(f)
+        else:
+            # 如果不存在"embedding_config.json"，则创建它
+            self.embedding_config = {
+                "default_empty_vec": {
+                    "embedding_model_type": "OpenAI",
+                    "embedding_model": "text-embedding-ada-002"
+                }
+            }
+            with open("embedding_config.json", 'w', encoding='gb18030') as file:
+                json.dump(self.embedding_config, file, ensure_ascii=False, indent=4)
+            tmp_vec_path = os.path.join(os.getcwd(), "knowledge base", "default_empty_vec")
+            if os.path.exists(tmp_vec_path) is False:
+                os.makedirs(tmp_vec_path)
+            create_vectorstore(tmp_vec_path, "OpenAI", "text-embedding-ada-002")
+                
+        self.knowledge_bases = list(self.embedding_config.keys())
+
+    def reinitialize(self):
+        '''重新初始化，以重载json中内容'''
+        self.__init__()
+
+    def get_embedding_model(self, knowledge_base_name:str):
+        """
+        根据知识库名称获取嵌入模型的分类和名称
+
+        Args:
+            knowledge_base_name: `embedding_config.json` 中保存的名称;
+        
+        Return: 
+            `embedding_model_type`: str,`embedding_model`: str
+        """
+        
+        if knowledge_base_name in self.knowledge_bases:
+            return self.embedding_config[knowledge_base_name]["embedding_model_type"],self.embedding_config[knowledge_base_name]["embedding_model"]
+        else:
+            raise ValueError(f"未找到名为{knowledge_base_name}的知识库")
+        
+    def get_persist_vec_path(self, knowledge_base_name:str):
+        '''在默认路径下按名字查找知识库，并返回知识库的路径'''
+        vec_root_path = os.path.join(os.getcwd(), "knowledge base")
+        vec_path = os.path.join(vec_root_path, knowledge_base_name)
+        if os.path.exists(vec_path):
+            return vec_path
+        else:
+            raise ValueError(f"未找到名为{knowledge_base_name}的知识库")
 
 def load_vectorstore(persist_vec_path:str,
                      embedding_model_type:Literal['OpenAI','Hugging Face(local)'],
@@ -451,7 +571,7 @@ def load_vectorstore(persist_vec_path:str,
         return df,gr.Dropdown(value=file_names[0],choices=file_names)
     except IndexError:
         gr.Info(i18n('No file in vectorstore.'))
-        return df,gr.Dropdown(choices=[])
+        return df,gr.Dropdown(choices=[],allow_custom_value=False)
 
 def refresh_file_list(df):
     '''
