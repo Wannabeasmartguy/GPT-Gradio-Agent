@@ -29,6 +29,7 @@ load_dotenv()
 # openai.api_type = os.getenv('OPENAI_API_TYPE')
 
 # initialize the embedding model setting 
+model_type_choice = ["OpenAI","Hugging Face(local)"]
 openai_embedding_model = ["text-embedding-ada-002"]
 local_embedding_model = ['bge-base-zh-v1.5','bge-base-en-v1.5',
                          'bge-large-zh-v1.5','bge-large-en-v1.5']
@@ -286,7 +287,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                 sum_result = gr.State()
                 # set a element to aviod indexerror
                 file_answer = gr.State(['0']) 
-                embedding_model_type = gr.Dropdown(choices=['Hugging Face(local)', 'OpenAI'], 
+                embedding_model_type = gr.Dropdown(choices=model_type_choice, 
                                                value='Hugging Face(local)', 
                                                label=i18n("Embedding Model Type"),
                                                interactive=True)
@@ -578,6 +579,21 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
            [kb_vector_content,kb_file_list])
     
     # 选择vector_list以后，先更新vector_path
+    # 暂时加一个刷新函数
+    def tmp_refresh_embedding_model(embedding_model:str,
+                                    openai_embedding_model:list = openai_embedding_model,
+                                    local_embedding_model:list =local_embedding_model):
+        if embedding_model in local_embedding_model:
+            return local_embedding_model 
+        else:
+            return openai_embedding_model
+    def tmp_refresh_embedding_model_type(embedding_model:str,
+                                         openai_embedding_model=openai_embedding_model):
+        if embedding_model in openai_embedding_model:
+            return "OpenAI" 
+        else:
+            return "Hugging Face(local)"
+        
     vector_list.select(kb.get_persist_vec_path,
                         [vector_list],
                         [vector_path]
@@ -596,10 +612,13 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
         [vector_list],
         [embedding_model_type,embedding_model]
     ).then(
-        lambda:gr.Dropdown(),
+        lambda embedding_model:gr.Dropdown(value=tmp_refresh_embedding_model_type(embedding_model),
+                                           choices=model_type_choice),
+        inputs=[embedding_model],
         outputs=[embedding_model_type],
     ).then(
-        lambda:gr.Dropdown(),
+        lambda embedding_model:gr.Dropdown(choices=tmp_refresh_embedding_model(embedding_model)),
+        inputs=[embedding_model],
         outputs=[embedding_model]
     )
     
