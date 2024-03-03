@@ -596,10 +596,10 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
         [vector_list],
         [embedding_model_type,embedding_model]
     ).then(
-        lambda:gr.Dropdown(interactive=False),
+        lambda:gr.Dropdown(),
         outputs=[embedding_model_type],
     ).then(
-        lambda:gr.Dropdown(interactive=False),
+        lambda:gr.Dropdown(),
         outputs=[embedding_model]
     )
     
