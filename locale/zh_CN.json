@@ -92,5 +92,10 @@
     "BING_SUBSCRIPTION_KEY and BING_SEARCH_URL cannot be empty.":"环境变量 BING_SUBSCRIPTION_KEY 和 BING_SEARCH_URL 不能为空。",
     "RAG Basic Setting":"RAG 基本设置",
     "Embedding Model Type":"嵌入模型类型",
-    "Embedding Model":"嵌入模型"
+    "Embedding Model":"嵌入模型",
+    "Knowledge base list":"知识库列表",
+    "Knowledge base name":"知识库名称",
+    "Delete knowledge base":"删除知识库",
+    "Create/Delete Knowledge base":"创建/删除知识库",
+    "Create successfully!":"创建成功！"
 }

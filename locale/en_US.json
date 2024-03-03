@@ -87,5 +87,10 @@
     "BING_SUBSCRIPTION_KEY and BING_SEARCH_URL cannot be empty.":"BING_SUBSCRIPTION_KEY and BING_SEARCH_URL cannot be empty.",
     "RAG Basic Setting":"RAG Basic Setting",
     "Embedding Model Type":"Embedding Model Type",
-    "Embedding Model":"Embedding Model"
+    "Embedding Model":"Embedding Model",
+    "Knowledge base list":"Knowledge base list",
+    "Knowledge base name":"Knowledge base name",
+    "Delete knowledge base":"Delete knowledge base",
+    "Create/Delete Knowledge base":"Create/Delete Knowledge base",
+    "Create successfully!":"Create successfully!"
 }

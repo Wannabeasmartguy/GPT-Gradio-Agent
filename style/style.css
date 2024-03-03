@@ -6,8 +6,22 @@
 #Accordion {
     background-color: #eff6ff;
 }
+#Accordion_sec {
+    background-color: #d6e9ff;
+}
+#text_sec {
+    background-color: #ddf1ff;
+}
 #btn {
     background-color: #3b82f6 !important;
+    color: #FFFFFF;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+#btn_danger {
+    background-color: #f63b3b !important;
     color: #FFFFFF;
     padding: 10px 20px;
     border: none;
