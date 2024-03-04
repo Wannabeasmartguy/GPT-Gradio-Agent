@@ -17,6 +17,10 @@
 
 ![v0 7 RAG 界面](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/705c8f58-d46b-487a-b4d5-9cc38397397f)
 
+### 知识库管理
+
+#### 知识库详细内容
+
 **v0.9.0 新增**：你现在不仅可以查看知识库的文件目录，还可以查看知识库内的具体内容，并且了解具体的分块情况。
 
 ![knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/adec4553-8815-419b-9b72-445bd6176c63)
@@ -29,6 +33,43 @@
 
 并且，它是一个独立的模块，这也就意味着，你可以同时在打开知识库 A 时，使用该模块查看知识库 B ！
 
+#### 本地 Embedding
+
+>  v0.12.0 新增
+
+现在你可以在 `嵌入模型类型` 中选择 `Hugging Face(local)` ，并自行选择已经支持的嵌入模型进行向量嵌入（目前已支持：BGE v1.5 系列）。
+
+#### 全新的知识库组织形式
+
+> v0.12.0 新增，该改动为跨越式改动，需要进行知识库的手动移植。
+
+现在，知识库将统一存储至路径 `.\knowledge base` 下，并且在右侧边栏以下拉列表的形式展现。你可以创建自定义名称的知识库，该名称将作为文件夹的名称。
+
+![知识库列表](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/01175158-5564-48ed-9c03-bf465d2be6d4)
+
+> 移植旧有的知识库，请完成以下步骤：
+>
+> 1. 在根目录下新建文件 `embedding_config.json` ，填写以下内容：
+>
+> ```json
+> {
+>     "your knowledge base name": {
+>         "embedding_model_type": "OpenAI",
+>         "embedding_model": "text-embedding-ada-002"
+>     },
+>     ...
+> }
+> ```
+>
+> 将你想要使用的名称替换掉 `your knowledge base name` （可以是中文）。
+>
+> 2. 将原知识库文件夹完整地移动到 `.\knowledge base` 下，并将文件名称改为**步骤 1 中填入的名称**。
+> 3. 移植成功！运行程序即可正常使用。
+
+值得强调的是，在知识库列表中选中知识库后，页面会自动更新对应的嵌入模型信息，但是这些信息**可以手动更改**，我的本意是**你可以在创建知识库后可以自由选定嵌入模型**，但是这实际上可能会导致在**同一个知识库中出现两种不同维度的向量（如果你在一次嵌入后自作主张地修改嵌入模型）**。
+
+对此我暂时没有想到好的解决方式，如果你有好想法，欢迎提 Issue 。所以就目前来说，强烈建议**仅在创建新知识库时调整该选项，其他时候都不要修改**。
+
 ## Dall-E-3 图片生成器
 
 如果你有 Azure OpenAI API 的访问权限，那么不尝试一下 Dall-E-3 模型来生成图片真是太浪费了！基于其非常强大的图片生成能力，它可能会成为你的得力助手。
@@ -40,6 +81,8 @@
 通过利用搜索引擎（目前支持Bing）的广泛知识和 LLM 的卓越功能，您可以获得精确的答案和广泛的参考资料。它的灵感来自 [search_with_lepton](https://github.com/leptonai/search_with_lepton)。
 
 ![search with gpt4](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/89cdcb56-82c1-4b2c-a2ef-60a63bc8dfe0)
+
+> 并且你还可以查看此前的历史记录，该项功能预计将不晚于 v0.14 上线。
 
 # 快速开始
 
@@ -111,6 +154,8 @@
 - [x] RAG 强化搜索引擎搜索
   
   - [x] 支持 Bing 搜索引擎
+  
+  - [ ] 历史搜索记录的保存和查看（不晚于 v0.14）
 
 - [x] 网页内容检索及总结（通过提示词）
 

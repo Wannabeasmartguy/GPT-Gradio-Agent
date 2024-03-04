@@ -346,7 +346,11 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                     # allow_custom_value=True,
                                                     label=i18n("File list"))
                         with gr.Column():
-                            load_vec = gr.Button(value=i18n("Load your 📁 "),variant='primary',elem_id="btn")
+                            # `load_complete_vec_button` created in v0.12, is used to reload `vector_list`
+                            load_complete_vec_button = gr.Button(value=i18n("Load your 📁 "),variant='primary',elem_id="btn")
+                            # `load_vec` is was used in version previous v0.12 to load vector store in specific path.
+                            # DEPRECATED
+                            load_vec = gr.Button(value=i18n("Load your 📁 "),variant='primary',elem_id="btn",visible=False)
                             with gr.Row():
                                 add_file = gr.Button(value=i18n("Add it (The file uploaded) to 📁"),
                                                     scale=1)
@@ -553,10 +557,10 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
         inputs=[vector_name,embedding_model_type,embedding_model]
     ).success(
         create_kb_info_in_config,[vector_name,embedding_model_type,embedding_model],[]
-    ).success(
-        kb.reinitialize,[],[]
     ).then(
         lambda: gr.Textbox(value=None),[],[vector_name]
+    ).success(
+        kb.reinitialize,[],[]
     ).success(
         lambda: gr.Dropdown(choices=kb.knowledge_bases),[],[vector_list]
     )
@@ -578,6 +582,11 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
            [vector_path,embedding_model_type,embedding_model],
            [kb_vector_content,kb_file_list])
     
+    load_complete_vec_button.click(kb.reinitialize,[],[]
+    ).success(
+        lambda: gr.Dropdown(choices=kb.knowledge_bases),[],[vector_list]
+    )
+
     # 选择vector_list以后，先更新vector_path
     # 暂时加一个刷新函数
     def tmp_refresh_embedding_model(embedding_model:str,

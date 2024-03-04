@@ -20,6 +20,10 @@ Very efficient!
 
 ![v0 7 RAG 界面](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/903ef0ba-20f4-449e-ac31-654953b930ba)
 
+### Knowledge Base Management
+
+#### Knowledge Base Details
+
 **v0.9.0 New**: You can now view not only the file directory of the knowledge base, but also the specific content in the knowledge base, and understand the specific chunks.
 
 ![knowledge base info](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/adec4553-8815-419b-9b72-445bd6176c63)
@@ -32,6 +36,42 @@ It's important to note that when you load a knowledge base, it will automaticall
 
 Also, it's a stand-alone module, which means you can use it to view Knowledge Base A when you open Knowledge Base B at the same time!
 
+#### Local Embedding
+
+> v0.12.0 Added.
+
+Now you can select `Hugging Face(local)` in `Embedding Model Type` and choose your own supported embedding model for vector embedding (currently supported: BGE v1.5 series).
+
+#### Brand New Knowledge Base Management
+
+> Added in v0.12.0, this change is a leapfrog change and requires a manual migration of the knowledge base.
+
+The knowledge base will now be stored centrally under the path `. \knowledge base` and is displayed as a drop-down list in the right sidebar. You can create a customized name for the knowledge base, which will be used as the name of the folder.
+
+![知识库列表](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/01175158-5564-48ed-9c03-bf465d2be6d4)
+
+> To migrate a legacy knowledge base, complete the following steps:
+>
+> 1. Create a new file `embedding_config.json` in the root directory and fill in the following contents:
+>
+> ```json
+> {
+>     "your knowledge base name": {
+>         "embedding_model_type": "OpenAI",
+>         "embedding_model": "text-embedding-ada-002"
+>     },
+>     ...
+> }
+> ```
+>
+> Replace `your knowledge base name` with the name you want to use.
+> 2. Move the original knowledge base folder in `. \knowledge base`  and change the name of the file to **the name entered in step 1**.
+> 3. Successful migration! Run the program to use it normally.
+
+It's worth emphasizing that after selecting a knowledge base in the knowledge base list, the page is automatically updated with the corresponding embedding model information, but these information **can be changed manually**, my intention was that **you could freely select the embedding model when creating the knowledge base**, but this could actually result in **two vectors of different dimensions in the same knowledge base (if you embedded it once and then take it upon yourself to modify the embedding model)**.
+
+I don't have a good solution for this at the moment, so if you have a good idea, please feel free to submit an Issue. So for now, it is highly recommended that **only when creating a new knowledge base adjust this option, and not modify it at any other time**.
+
 ## Dall-E-3 Image Generator
 
 If you have access to the Azure OpenAI API, it's a waste not to try the Dall-E-3 model to generate images!
@@ -43,6 +83,8 @@ If you have access to the Azure OpenAI API, it's a waste not to try the Dall-E-3
 By harnessing the extensive knowledge of search engines (Bing Search) in conjunction with the exceptional capabilities of LLM, you can obtain precise answers and a wide range of references. It's inspired by [search_with_lepton](https://github.com/leptonai/search_with_lepton)
 
 ![search with gpt4](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/89cdcb56-82c1-4b2c-a2ef-60a63bc8dfe0)
+
+> You can also view previous history, which is expected to be available no later than v0.14.
 
 # Get Started
 
@@ -117,6 +159,8 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
 - [x] RAG Web Search
 
   - [x] Support Bing Search
+  
+  - [ ] Saving and Viewing Historical Search History
 
 - [x] **Web requester(By prompts)**
 
