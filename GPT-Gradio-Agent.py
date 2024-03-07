@@ -34,6 +34,11 @@ openai_embedding_model = ["text-embedding-ada-002"]
 local_embedding_model = ['bge-base-zh-v1.5','bge-base-en-v1.5',
                          'bge-large-zh-v1.5','bge-large-en-v1.5']
 
+# initialize the chat model setting
+model_source_choice = ["OpenAI","Ollama"]
+openai_chat_model = ["gpt-35-turbo","gpt-35-turbo-16k","gpt-4","gpt-4-32k","gpt-4-1106-preview","gpt-4-vision-preview"]
+ollama_chat_model = ["qwen:7b-chat"]
+
 # 初始化主题
 set_theme = adjust_theme()
 
@@ -45,6 +50,7 @@ i18n = I18nAuto()
 kb = KnowledgeBase()
 # <---------- set environmental parameters --------->
 
+# TODO:增加自定义模型的max_token,并且记得增加对其他自定义参数的适配
 def model_token_correct(model_choice:str):
     '''Different model has different max tokens, this is to correct the max_token slider right.'''
     model_maxtoken_dic = {
@@ -164,10 +170,23 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                 elem_id="history-select-dropdown",
             )
         with gr.Column(scale=4):
-            model_choice = gr.Radio(choices=["gpt-35-turbo","gpt-35-turbo-16k","gpt-4","gpt-4-32k","gpt-4-1106-preview","gpt-4-vision-preview"],
-                                    value="gpt-35-turbo",
-                                    label=i18n("Model"),
-                                    info=i18n("Model info"),)
+            with gr.Row():
+                chat_model_type = gr.Radio(choices=model_source_choice,
+                                           value="Ollama",
+                                           interactive=True)
+                model_choice = gr.Radio(choices=ollama_chat_model,
+                                        value=ollama_chat_model[0],
+                                        label=i18n("Model"),
+                                        info=i18n("Model info"),
+                                        interactive=True)
+                def get_chat_model_select(evt: gr.SelectData):
+                    if evt.value == 'OpenAI':
+                        return gr.Dropdown(choices=openai_chat_model,
+                                           value=openai_chat_model[0])
+                    elif evt.value == 'Ollama':
+                        return gr.Dropdown(choices=ollama_chat_model,
+                                           value=ollama_chat_model[0])
+                chat_model_type.select(get_chat_model_select,outputs=[model_choice])
             with gr.Tab(label=i18n("ChatInterface")):
                 with gr.Group():
                     chat_name = gr.Textbox(label=i18n("Chatbot name"),
@@ -431,7 +450,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                 )
 
     # Merge all handles that require input and output.
-    input_param = [message, model_choice, chat_his, chat_bot, System_Prompt, 
+    input_param = [message, chat_model_type,model_choice, chat_his, chat_bot, System_Prompt, 
                    Context_length, Temperature,max_tokens,top_p,frequency_penalty,
                    presence_penalty]
     output_param = [chat_bot, usr_msg, chat_his]
