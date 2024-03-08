@@ -1,5 +1,6 @@
 from langchain.chains.summarize import load_summarize_chain
 from langchain_community.vectorstores import chroma
+from langchain_community.chat_models import ChatOllama
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
 from langchain_openai.chat_models import AzureChatOpenAI
 from langchain.chains import RetrievalQA,ConversationalRetrievalChain
@@ -366,6 +367,12 @@ def delete_kb_info_in_config(persist_vec_name:str):
     with open(os.path.join(os.getcwd(), "embedding_config.json"), "w", encoding="utf-8") as f:
         json.dump(config_dict, f, ensure_ascii=False, indent=4)
 
+
+def reset_kb():
+    global kb
+    kb = KnowledgeBase()
+    
+    
 def reset_kb():
     global kb
     kb = KnowledgeBase()
@@ -380,34 +387,40 @@ def add_file_in_vectorstore(persist_vec_path:str,
     '''
     Add file to vectorstore.
     '''
-
+    import os
     embedding_model_path = 'embedding model/'+local_embedding_model
 
     if file_obj == None:
         raise gr.Error("You haven't chosen a file yet.")
 
-    if persist_vec_path:
-        global vectorstore
-        if embedding_model_type == 'OpenAI':
-            vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
-                                embedding_function=AzureOpenAIEmbeddings())
-        elif embedding_model_type == 'Hugging Face(local)':
-            try:
-                embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
-                vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
-                                            embedding_function=embeddings)
-            except:
-                # 如果没下载模型，则重新下载模型
-                progress(0.3, "Downloading embedding model...")
-                if local_embedding_model[:3] == 'bge':
-                    snapshot_download(repo_id="BAAI/"+local_embedding_model,
-                                      local_dir=embedding_model_path)
-                    embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
-                    vectorstore = chroma.Chroma(persist_directory=persist_vec_path,
-                                                embedding_function=embeddings)
+    # if persist_vec_path:
+    #     global vectorstore
+    #     if embedding_model_type == 'OpenAI':
+    #         vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
+    #                             embedding_function=AzureOpenAIEmbeddings(
+    #                                 openai_api_type=os.getenv('API_TYPE'),
+    #                                 azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+    #                                 openai_api_key=os.getenv('AZURE_OAI_KEY'),
+    #                                 openai_api_version=os.getenv('API_VERSION'),
+    #                                 azure_deployment="text-embedding-ada-002",
+    #                             ))
+    #     elif embedding_model_type == 'Hugging Face(local)':
+    #         try:
+    #             embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
+    #             vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
+    #                                         embedding_function=embeddings)
+    #         except:
+    #             # 如果没下载模型，则重新下载模型
+    #             progress(0.3, "Downloading embedding model...")
+    #             if local_embedding_model[:3] == 'bge':
+    #                 snapshot_download(repo_id="BAAI/"+local_embedding_model,
+    #                                   local_dir=embedding_model_path)
+    #                 embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
+    #                 vectorstore = chroma.Chroma(persist_directory=persist_vec_path,
+    #                                             embedding_function=embeddings)
 
-    else:
-        raise gr.Error("You haven't chosen a knowledge base yet.")
+    # else:
+    #     raise gr.Error("You haven't chosen a knowledge base yet.")
     
     # Before we add file, we should detect if there is a file with the same name
     import os
@@ -608,6 +621,7 @@ def refresh_file_list(df):
 def ask_file(file_ask_history_list:list,
             question_prompt: str,
             file_answer:list,
+            chat_model_type:str,
             model_choice:str,
             sum_type:str,
             persist_vec_path,
@@ -621,14 +635,17 @@ def ask_file(file_ask_history_list:list,
     if chat_memory == None:
         chat_memory = ConversationBufferMemory(memory_key="chat_memory", return_messages=True)
 
-    llm = AzureChatOpenAI(model=model_choice,
-                    openai_api_type=os.getenv('API_TYPE'),
-                    azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
-                    openai_api_key=os.getenv('AZURE_OAI_KEY'),
-                    openai_api_version=os.getenv('API_VERSION'),
-                    # eployment_name=os.getenv('AZURE_OAI_ENDPOINT')+ "deployments/" +'gpt-35-turbo', 
-                    deployment_name=model_choice,
-                    temperature=0.7)
+    if chat_model_type == 'OpenAI':
+        llm = AzureChatOpenAI(model=model_choice,
+                        openai_api_type=os.getenv('API_TYPE'),
+                        azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                        openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                        openai_api_version=os.getenv('API_VERSION'),
+                        # eployment_name=os.getenv('AZURE_OAI_ENDPOINT')+ "deployments/" +'gpt-35-turbo', 
+                        deployment_name=model_choice,
+                        temperature=0.7)
+    elif chat_model_type == 'Ollama':
+        llm = ChatOllama(model=model_choice)
     
     source_data = vectorstore.get()
     filter_goal = find_source_paths(file_list,source_data)

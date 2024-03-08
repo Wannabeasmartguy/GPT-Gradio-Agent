@@ -550,7 +550,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     file.clear(lambda:gr.Textbox(value=''),[],[estimate_cost])
     refresh_file_cost.click(lambda:gr.Text(),[],[estimate_cost]).then(lambda:gr.File(),[],[file]).then(lambda:gr.Text(),[],[estimate_cost])
     chat_with_file.click(ask_file,
-                         inputs=[chat_bot,message,file_answer,model_choice,
+                         inputs=[chat_bot,message,file_answer,chat_model_type,model_choice,
                                  sum_type,vector_path,file_list,filter_choice],
                          outputs=[chat_bot,file_answer]
                          ).then(file_ask_stream,
