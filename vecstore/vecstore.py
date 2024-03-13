@@ -26,6 +26,16 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+model_type_choice = ["OpenAI","Hugging Face(local)"]
+openai_embedding_model = ["text-embedding-ada-002"]
+local_embedding_model = ['bge-base-zh-v1.5','bge-base-en-v1.5',
+                         'bge-large-zh-v1.5','bge-large-en-v1.5']
+embedding_decoder_dic = {
+    'model_type_choice':model_type_choice,
+    'openai_embedding_model':openai_embedding_model,
+    'local_embedding_model':local_embedding_model
+}
+
 i18n = I18nAuto()  
 
 global chat_memory
@@ -36,10 +46,6 @@ client = AzureOpenAI(
   api_key = os.getenv('AZURE_OAI_KEY'),  
   api_version = os.getenv('API_VERSION')
 )
-
-def _init():
-    global vec_store
-    vec_store = chroma()
     
 def combine_lists_to_dicts(docs, ids, metas):
     """
@@ -367,16 +373,6 @@ def delete_kb_info_in_config(persist_vec_name:str):
     with open(os.path.join(os.getcwd(), "embedding_config.json"), "w", encoding="utf-8") as f:
         json.dump(config_dict, f, ensure_ascii=False, indent=4)
 
-
-def reset_kb():
-    global kb
-    kb = KnowledgeBase()
-    
-    
-def reset_kb():
-    global kb
-    kb = KnowledgeBase()
-    
 def add_file_in_vectorstore(persist_vec_path:str, 
                             split_docs:list,
                             embedding_model_type:str,
@@ -395,29 +391,29 @@ def add_file_in_vectorstore(persist_vec_path:str,
 
     # if persist_vec_path:
     #     global vectorstore
-    #     if embedding_model_type == 'OpenAI':
-    #         vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
-    #                             embedding_function=AzureOpenAIEmbeddings(
-    #                                 openai_api_type=os.getenv('API_TYPE'),
-    #                                 azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
-    #                                 openai_api_key=os.getenv('AZURE_OAI_KEY'),
-    #                                 openai_api_version=os.getenv('API_VERSION'),
-    #                                 azure_deployment="text-embedding-ada-002",
-    #                             ))
-    #     elif embedding_model_type == 'Hugging Face(local)':
-    #         try:
-    #             embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
-    #             vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
-    #                                         embedding_function=embeddings)
-    #         except:
-    #             # 如果没下载模型，则重新下载模型
-    #             progress(0.3, "Downloading embedding model...")
-    #             if local_embedding_model[:3] == 'bge':
-    #                 snapshot_download(repo_id="BAAI/"+local_embedding_model,
-    #                                   local_dir=embedding_model_path)
-    #                 embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
-    #                 vectorstore = chroma.Chroma(persist_directory=persist_vec_path,
-    #                                             embedding_function=embeddings)
+    if embedding_model_type == 'OpenAI':
+        vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
+                            embedding_function=AzureOpenAIEmbeddings(
+                                openai_api_type=os.getenv('API_TYPE'),
+                                azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                                openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                                openai_api_version=os.getenv('API_VERSION'),
+                                azure_deployment="text-embedding-ada-002",
+                            ))
+    elif embedding_model_type == 'Hugging Face(local)':
+        try:
+            embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
+            vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
+                                        embedding_function=embeddings)
+        except:
+            # 如果没下载模型，则重新下载模型
+            progress(0.3, "Downloading embedding model...")
+            if local_embedding_model[:3] == 'bge':
+                snapshot_download(repo_id="BAAI/"+local_embedding_model,
+                                    local_dir=embedding_model_path)
+                embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
+                vectorstore = chroma.Chroma(persist_directory=persist_vec_path,
+                                            embedding_function=embeddings)
 
     # else:
     #     raise gr.Error("You haven't chosen a knowledge base yet.")
@@ -486,9 +482,25 @@ def delete_flie_in_vectorstore(file_list,
         raise gr.Error('File does not exist in vectorstore.')
     return
 
+def text_to_gr_dropdown(choice:dict # 格式如 embedding_decoder_dic
+                        ):
+    '''
+    将 str 转换为 gr.Dropdown 。
+    '''
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            embedding_model_type,embedding_model = func(*args, **kwargs)
+            if embedding_model_type == 'OpenAI':
+                return gr.Dropdown(value=embedding_model_type,choices=choice['model_type_choice']),gr.Dropdown(value=embedding_model,choices=choice['openai_embedding_model'])
+            elif embedding_model_type == 'Hugging Face(local)':
+                return gr.Dropdown(value=embedding_model_type,choices=choice['model_type_choice']),gr.Dropdown(value=embedding_model,choices=choice['local_embedding_model'])
+        return wrapper
+    return decorator
+
 class KnowledgeBase:
     '''
-    用于管理本地知识库的类
+    用于管理本地知识库的基类,一般不应直接实例化该类
     '''
     def __init__(self):
         '''
@@ -550,6 +562,29 @@ class KnowledgeBase:
         vec_path = os.path.join(vec_root_path, knowledge_base_name)
         if os.path.exists(vec_path):
             return vec_path
+        else:
+            raise ValueError(f"未找到名为{knowledge_base_name}的知识库")
+
+class GRKnowledgeBase(KnowledgeBase):
+    '''
+    将类 KnowledgeBase 输出规范化为 Gradio 的组件格式，继承自 KnowledgeBase
+    '''
+    @text_to_gr_dropdown(embedding_decoder_dic)
+    def get_embedding_model(self, knowledge_base_name:str):
+        """
+        根据知识库名称获取嵌入模型的分类和名称
+
+        Args:
+            knowledge_base_name: `embedding_config.json` 中保存的名称;
+        
+        Return: 
+            `embedding_model_type`: str, 修饰为gr.dropdown
+            `embedding_model`: str, 修饰为gr.dropdown
+            `choice`: list, 用于更新 Dropdown 
+        """
+        
+        if knowledge_base_name in self.knowledge_bases:
+            return self.embedding_config[knowledge_base_name]["embedding_model_type"],self.embedding_config[knowledge_base_name]["embedding_model"]
         else:
             raise ValueError(f"未找到名为{knowledge_base_name}的知识库")
 

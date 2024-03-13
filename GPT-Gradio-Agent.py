@@ -47,7 +47,7 @@ set_theme = adjust_theme()
 # Initialize language
 i18n = I18nAuto()  
 # Initialize knowledge base
-kb = KnowledgeBase()
+kb = GRKnowledgeBase()
 # <---------- set environmental parameters --------->
 
 # TODO:增加自定义模型的max_token,并且记得增加对其他自定义参数的适配
@@ -605,22 +605,6 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     ).success(
         lambda: gr.Dropdown(choices=kb.knowledge_bases),[],[vector_list]
     )
-
-    # 选择vector_list以后，先更新vector_path
-    # 暂时加一个刷新函数
-    def tmp_refresh_embedding_model(embedding_model:str,
-                                    openai_embedding_model:list = openai_embedding_model,
-                                    local_embedding_model:list =local_embedding_model):
-        if embedding_model in local_embedding_model:
-            return local_embedding_model 
-        else:
-            return openai_embedding_model
-    def tmp_refresh_embedding_model_type(embedding_model:str,
-                                         openai_embedding_model=openai_embedding_model):
-        if embedding_model in openai_embedding_model:
-            return "OpenAI" 
-        else:
-            return "Hugging Face(local)"
         
     vector_list.select(kb.get_persist_vec_path,
                         [vector_list],
@@ -639,15 +623,6 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
         lambda vector_list:kb.get_embedding_model(vector_list),
         [vector_list],
         [embedding_model_type,embedding_model]
-    ).then(
-        lambda embedding_model:gr.Dropdown(value=tmp_refresh_embedding_model_type(embedding_model),
-                                           choices=model_type_choice),
-        inputs=[embedding_model],
-        outputs=[embedding_model_type],
-    ).then(
-        lambda embedding_model:gr.Dropdown(choices=tmp_refresh_embedding_model(embedding_model)),
-        inputs=[embedding_model],
-        outputs=[embedding_model]
     )
     
     #file_list.change(refresh_file_list,inputs=[vector_content],outputs=file_list)
