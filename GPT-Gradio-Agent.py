@@ -187,7 +187,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                         return gr.Dropdown(choices=ollama_chat_model,
                                            value=ollama_chat_model[0])
                 chat_model_type.select(get_chat_model_select,outputs=[model_choice])
-            with gr.Tab(label=i18n("ChatInterface")):
+            with gr.Tab(label=i18n("ChatInterface"),elem_id="chat-tab-in-column"):
                 with gr.Group():
                     chat_name = gr.Textbox(label=i18n("Chatbot name"),
                                             interactive=True,
