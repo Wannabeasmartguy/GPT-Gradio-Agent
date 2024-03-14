@@ -187,7 +187,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                         return gr.Dropdown(choices=ollama_chat_model,
                                            value=ollama_chat_model[0])
                 chat_model_type.select(get_chat_model_select,outputs=[model_choice])
-            with gr.Tab(label=i18n("ChatInterface"),elem_id="chat-tab-in-column"):
+            with gr.Tab(label=i18n("ChatInterface")):
                 with gr.Group():
                     chat_name = gr.Textbox(label=i18n("Chatbot name"),
                                             interactive=True,
@@ -206,11 +206,12 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                     export_his = gr.Button(value=i18n("Export Chat History"),scale=1)
                 with gr.Row():
                     chat_with_file = gr.Button(value=i18n("Chat with file (Valid for 📁)"))
-                    send = gr.Button(i18n("Send"),variant='primary',elem_id="btn",scale=2)
-                with gr.Row():
-                    delete_latest_round_button = gr.Button(i18n("Delete previous round"),scale=1,size="sm")
-                    regenerate_button = gr.Button(i18n("Regenerate"),scale=1,size="sm")
-                    clear = gr.ClearButton([message, chat_bot,chat_his],value=i18n("Clear"),scale=1)
+                    with gr.Column(scale=3):
+                        send = gr.Button(i18n("Send"),variant='primary',elem_id="btn")
+                        with gr.Row():
+                            delete_latest_round_button = gr.Button(i18n("Delete previous round"),size="sm")
+                            regenerate_button = gr.Button(i18n("Regenerate"),size="sm")
+                            clear = gr.ClearButton([message, chat_bot,chat_his],value=i18n("Clear"))
 
             with gr.Tab(label=i18n("Knowledge Base Info Interface")):
                 kb_vector_content = gr.DataFrame(visible=False,interactive=False,)
