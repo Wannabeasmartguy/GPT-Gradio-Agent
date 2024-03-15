@@ -527,7 +527,7 @@ class KnowledgeBase:
                     "embedding_model": "text-embedding-ada-002"
                 }
             }
-            with open("embedding_config.json", 'w', encoding='gb18030') as file:
+            with open("embedding_config.json", 'w', encoding='utf-8') as file:
                 json.dump(self.embedding_config, file, ensure_ascii=False, indent=4)
             tmp_vec_path = os.path.join(os.getcwd(), "knowledge base", "default_empty_vec")
             if os.path.exists(tmp_vec_path) is False:

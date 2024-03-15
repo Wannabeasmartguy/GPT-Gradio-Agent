@@ -288,6 +288,10 @@ class RAGSearchEngine():
         self.wait_time = 0.5
         self.contexts = []
         self.stop_words = stop_words
+        # 设置默认的历史记录文件名
+        self.history_file = 'search_his.json'
+        # 直接用 query 作为历史记录命名
+        self.query = ''
         
     def query_function(self,
                        query:str,
@@ -298,6 +302,7 @@ class RAGSearchEngine():
         # 如果模型为gpt-35-turbo或gpt-35-turbo-16k，则停止词为None
         # set self.modol as the model you choose 
         self.model = model
+        self.query = query
         if self.model == "gpt-35-turbo" or "gpt-35-turbo-16k":
             stop_words = None
         else:
@@ -380,8 +385,36 @@ class RAGSearchEngine():
     def gen_html_page(self):
         '''返回搜索结果转换得到的html'''
         html_page = list_to_html_page(self.contexts)
+        # 将 html_page 保存到 `.\search_his\search_his.json` 文件中
+        search_his_path = os.path.join(os.getcwd(), "search_his", "search_his.json")
+        search_his_dic = {
+            self.query: html_page
+        }
+        if not os.path.exists(search_his_path):
+            os.makedirs(os.path.join(os.getcwd(), "search_his"))
+        
+        # 检查历史记录是否存在
+        if not os.path.exists(search_his_path):
+            # 如果文件不存在，直接将字典写入文件
+            with open(search_his_path, 'w', encoding='utf-8') as f:
+                json.dump(search_his_dic, f, ensure_ascii=False, indent=4)
+        else:
+            # 如果文件存在，先将其内容读取出来，然后更新字典
+            with open(search_his_path, 'r', encoding='utf-8') as f:
+                search_his_data = json.load(f)
+                search_his_data.update(search_his_dic)
+            # 将更新后的字典写入文件
+            with open(search_his_path, 'w', encoding='utf-8') as f:
+                json.dump(search_his_data, f, ensure_ascii=False, indent=4)
         return html_page
     
     def get_contexts(self):
         '''返回搜索引擎的搜索结果'''
         return self.contexts
+    
+    def get_search_history(self):
+        '''读取`./search_his/search_his.json`，返回搜索历史'''
+        search_his_path = os.path.join(os.getcwd(), "search_his", "search_his.json")
+        with open(search_his_path, 'r', encoding='utf-8') as f:
+            search_his_dic = json.load(f)
+        return search_his_dic.keys(),search_his_dic.values()
