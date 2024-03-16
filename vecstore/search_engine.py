@@ -290,6 +290,7 @@ class RAGSearchEngine():
         self.stop_words = stop_words
         # 设置默认的历史记录文件名
         self.history_file = 'search_his.json'
+        self.search_his_path = os.path.join(os.getcwd(), "search_his", self.history_file)
         # 直接用 query 作为历史记录命名
         self.query = ''
         
@@ -298,11 +299,15 @@ class RAGSearchEngine():
                        model:str='gpt-35-turbo',
                        ):# ChatCompletionchunk
         '''Search for a question on Bing and send the search results to llm, which in turn will answer it'''
+        # set the model you choose as self.modol
+        self.model = model
+        # 暂时禁用 Ollama 作为 RAG 搜索的 LLM, 如果模型名称中不包含 'gpt' 则自动重置模型为 'gpt-35-turbo'
+        if self.model.find('gpt') == -1:
+            self.model = "gpt-35-turbo"
+
+        self.query = query
         # model 3.5 don't support `stop` param
         # 如果模型为gpt-35-turbo或gpt-35-turbo-16k，则停止词为None
-        # set self.modol as the model you choose 
-        self.model = model
-        self.query = query
         if self.model == "gpt-35-turbo" or "gpt-35-turbo-16k":
             stop_words = None
         else:
@@ -382,29 +387,57 @@ class RAGSearchEngine():
             except:
                 time.sleep(self.wait_time)
 
+        print(search_answer_formated)
+
+        content_dic = {
+            self.query: {
+            "content":str(search_answer_formated)
+            }
+        }
+        if not os.path.exists(self.search_his_path):
+            os.makedirs(os.path.join(os.getcwd(), "search_his"))
+            with open(self.search_his_path, "w", encoding="utf-8") as f:
+                json.dump({}, f, ensure_ascii=False, indent=4)
+
+        with open(self.search_his_path, "r", encoding="utf-8") as f:
+            search_history = json.load(f)
+            search_history.update(content_dic)
+        
+        # for key, value in content_dic.items():
+        #     if key not in search_history:
+        #         content_dic[key] = {}
+        #     content_dic[key]['content'] = value['content']
+        
+        with open(self.search_his_path, "w", encoding="utf-8") as f:
+            json.dump(search_history, f, ensure_ascii=False, indent=4)
+
     def gen_html_page(self):
         '''返回搜索结果转换得到的html'''
         html_page = list_to_html_page(self.contexts)
         # 将 html_page 保存到 `.\search_his\search_his.json` 文件中
-        search_his_path = os.path.join(os.getcwd(), "search_his", "search_his.json")
-        search_his_dic = {
-            self.query: html_page
+        search_sources_dic = {
+            self.query: {
+                "sources":html_page
+            }
         }
-        if not os.path.exists(search_his_path):
+        if not os.path.exists(self.search_his_path):
             os.makedirs(os.path.join(os.getcwd(), "search_his"))
         
         # 检查历史记录是否存在
-        if not os.path.exists(search_his_path):
+        if not os.path.exists(self.search_his_path):
             # 如果文件不存在，直接将字典写入文件
-            with open(search_his_path, 'w', encoding='utf-8') as f:
-                json.dump(search_his_dic, f, ensure_ascii=False, indent=4)
+            with open(self.search_his_path, 'w', encoding='utf-8') as f:
+                json.dump(search_sources_dic, f, ensure_ascii=False, indent=4)
         else:
             # 如果文件存在，先将其内容读取出来，然后更新字典
-            with open(search_his_path, 'r', encoding='utf-8') as f:
+            with open(self.search_his_path, 'r', encoding='utf-8') as f:
                 search_his_data = json.load(f)
-                search_his_data.update(search_his_dic)
+                for key, value in search_sources_dic.items():
+                    if key in search_his_data:
+                        search_his_data[key].update(value)
+
             # 将更新后的字典写入文件
-            with open(search_his_path, 'w', encoding='utf-8') as f:
+            with open(self.search_his_path, 'w', encoding='utf-8') as f:
                 json.dump(search_his_data, f, ensure_ascii=False, indent=4)
         return html_page
     
@@ -412,9 +445,25 @@ class RAGSearchEngine():
         '''返回搜索引擎的搜索结果'''
         return self.contexts
     
-    def get_search_history(self):
-        '''读取`./search_his/search_his.json`，返回搜索历史'''
-        search_his_path = os.path.join(os.getcwd(), "search_his", "search_his.json")
-        with open(search_his_path, 'r', encoding='utf-8') as f:
+    def get_search_history(self) -> list:
+        '''读取`./search_his/search_his.json`，返回搜索历史的键和值'''
+        try:
+            with open(self.search_his_path, 'r', encoding='utf-8') as f:
+                search_his_dic = json.load(f)
+        # 没有这个文件的话，就新建一个空json文件
+        except:
+            with open(self.search_his_path, 'w', encoding='utf-8') as f:
+                json.dump({}, f, ensure_ascii=False, indent=4)
+            with open(self.search_his_path, 'r', encoding='utf-8') as f:
+                search_his_dic = json.load(f)
+        # 对字典使用list直接获取全部键名，用.key()方法返回的 list 不是真 list ，而是 dict_key 类型，会报错
+        return list(search_his_dic)
+    
+    def get_search_history_by_key(self,key:str):
+        '''根据关键字key，读取`./search_his/search_his.json`，返回搜索历史'''
+        with open(self.search_his_path, 'r', encoding='utf-8') as f:
             search_his_dic = json.load(f)
-        return search_his_dic.keys(),search_his_dic.values()
+        if key == None:
+            return None
+        else:
+            return search_his_dic[key]['content'],search_his_dic[key]['sources']

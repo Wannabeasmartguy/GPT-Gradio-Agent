@@ -160,7 +160,7 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
 
   - [x] Support Bing Search
   
-  - [ ] Saving and Viewing Historical Search History
+  - [x] Saving and Viewing Historical Search History
 
 - [x] **Web requester(By prompts)**
 

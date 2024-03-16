@@ -171,7 +171,8 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
             )
         with gr.Column(scale=4):
             with gr.Row():
-                chat_model_type = gr.Radio(choices=model_source_choice,
+                chat_model_type = gr.Radio(label=i18n("Chat Model Type"),
+                                           choices=model_source_choice,
                                            value="Ollama",
                                            interactive=True)
                 model_choice = gr.Radio(choices=ollama_chat_model,
@@ -266,18 +267,28 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                            scale=1)
                 open_dir = gr.Button(value=i18n("Open output directory"))
             with gr.Tab(i18n("RAG Search")):
-                search_result_title = gr.HTML(value=search_Answer_icon,
-                                              visible=False)
-                search_result = gr.HTML(visible=False)
-                search_source_title = gr.HTML(value=search_quote_icon,
-                                              visible=False)
-                search_source = gr.HTML(visible=False)
-                with gr.Row():
-                    search_query = gr.Textbox(label=i18n("Query Prompt"),
-                                              scale=3)
-                    search_btn = gr.Button(value=i18n("Search"),
-                                           scale=1)
-                    rag_engine = RAGSearchEngine()
+                with gr.Tab(i18n("Search")):
+                    search_result_title = gr.HTML(value=search_Answer_icon,
+                                                visible=False)
+                    search_result = gr.HTML(visible=False)
+                    search_source_title = gr.HTML(value=search_quote_icon,
+                                                visible=False)
+                    search_source = gr.HTML(visible=False)
+                    with gr.Row():
+                        search_query = gr.Textbox(label=i18n("Query Prompt"),
+                                                scale=3)
+                        search_btn = gr.Button(value=i18n("Search"),
+                                            scale=1)
+                        rag_engine = RAGSearchEngine()
+                with gr.Tab(i18n("Search History")):
+                    with gr.Row():
+                        search_history_dropdown = gr.Dropdown(label=i18n("Library"),
+                                                            choices=rag_engine.get_search_history(),
+                                                            scale=4)
+                        refresh_search_history_list_btn = gr.Button(value=i18n("refresh"))
+                        
+                    search_history_content = gr.HTML()
+                    search_history_sources = gr.HTML()
 
         with gr.Column():
             with gr.Tab(i18n("Chat")):
@@ -335,7 +346,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                     ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"# Documents
                                                     ],
                                         height=150)
-                            summarize = gr.Button(value=i18n("Summarize file content"))
+                            summarize = gr.Button(value=i18n("Summarize file content"),visible=False)
                             with gr.Row():
                                 estimate_cost = gr.Text(label=i18n("Estimated cost:"), 
                                                         info=i18n("Estimated cost of embed file"),
@@ -668,6 +679,9 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     ).then(lambda:gr.Textbox(value=""),[],[search_query])
     # TODO:增加一个将 search_query 设置为 HTML 标题的处理函数 
 
+    refresh_search_history_list_btn.click(lambda:gr.Dropdown(choices=rag_engine.get_search_history()),[],[search_history_dropdown])
+    search_history_dropdown.change(rag_engine.get_search_history_by_key,
+                                   [search_history_dropdown],[search_history_content,search_history_sources])
 demo.queue().launch(inbrowser=True,debug=True,show_api=False
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"
                     )

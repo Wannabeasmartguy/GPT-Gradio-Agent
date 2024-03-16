@@ -92,5 +92,8 @@
     "Knowledge base name":"Knowledge base name",
     "Delete knowledge base":"Delete knowledge base",
     "Create/Delete Knowledge base":"Create/Delete Knowledge base",
-    "Create successfully!":"Create successfully!"
+    "Create successfully!":"Create successfully!",
+    "Search History":"Search History",
+    "Library": "Library",
+    "Chat Model Type": "Chat Model Type"
 }

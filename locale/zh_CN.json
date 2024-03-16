@@ -97,5 +97,9 @@
     "Knowledge base name":"知识库名称",
     "Delete knowledge base":"删除知识库",
     "Create/Delete Knowledge base":"创建/删除知识库",
-    "Create successfully!":"创建成功！"
+    "Create successfully!":"创建成功！",
+    "Search History":"搜索历史",
+    "refresh":"刷新",
+    "Library":"历史记录",
+    "Chat Model Type":"聊天模型类型"
 }
