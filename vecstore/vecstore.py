@@ -8,6 +8,11 @@ from langchain.memory import ConversationBufferMemory
 from langchain_community.embeddings.sentence_transformer import (
     SentenceTransformerEmbeddings,
 )
+from langchain_community.document_loaders import TextLoader,UnstructuredFileLoader
+from langchain.text_splitter import CharacterTextSplitter,RecursiveCharacterTextSplitter
+from langchain.storage import InMemoryStore
+from langchain.retrievers import ContextualCompressionRetriever,ParentDocumentRetriever
+
 from huggingface_hub import snapshot_download
 from typing import Literal
 from openai import BadRequestError
@@ -21,6 +26,7 @@ import json
 from gga_utils.common import *
 from gga_utils.vec_utils import *
 from local_llm.ollama import *
+from reranker import *
 import functools
 import os
 from dotenv import load_dotenv
@@ -71,6 +77,46 @@ def combine_lists_to_dicts(docs, ids, metas):
     dict_lists = [{"documents": doc, "ids": id, "metadatas": meta} for doc, id, meta in tuples]
 
     return dict_lists
+
+def vectorstore_init_create(persist_vec_path, 
+                            embedding_model_type,
+                            local_embedding_model, 
+                            progress=gr.Progress()):
+    '''
+    Generic Vectorstore Creation Functions
+
+    Args:
+        persist_vec_path: chroma persist path.
+        embedding_model_type: `OpenAI` or `Hugging Face(local)`
+        local_embedding_model: If `embedding_model_type` == `OpenAI`, there's only one model, here will give a specific embedding model. 
+        progress: create gradio progress bar.
+    '''
+    local_embedding_model_path = os.path.join("embedding model/",local_embedding_model)
+    if embedding_model_type == 'Hugging Face(local)':
+        try:
+            embeddings = SentenceTransformerEmbeddings(model_name=local_embedding_model_path)
+            vectorstore = chroma.Chroma(
+                persist_directory=persist_vec_path, embedding_function=embeddings
+            )
+        except:
+            progress(0.3, "Downloading embedding model...")
+            if local_embedding_model[:3] == 'bge':
+                snapshot_download(repo_id="BAAI/"+local_embedding_model,
+                                    local_dir=local_embedding_model_path)
+                embeddings = SentenceTransformerEmbeddings(model_name=local_embedding_model_path)
+                vectorstore = chroma.Chroma(persist_directory=persist_vec_path,
+                                            embedding_function=embeddings)
+                
+    elif embedding_model_type == 'OpenAI':
+        vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
+                             embedding_function=AzureOpenAIEmbeddings(
+                             openai_api_type=os.getenv('API_TYPE'),
+                             azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                             openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                             openai_api_version=os.getenv('API_VERSION'),
+                             azure_deployment="text-embedding-ada-002",
+                            ))
+    return vectorstore
 
 def get_chroma_info(persist_path:str,
                     file_name:str,
@@ -383,37 +429,14 @@ def add_file_in_vectorstore(persist_vec_path:str,
     '''
     Add file to vectorstore.
     '''
-    import os
-    embedding_model_path = 'embedding model/'+local_embedding_model
 
     if file_obj == None:
         raise gr.Error("You haven't chosen a file yet.")
 
-    # if persist_vec_path:
-    #     global vectorstore
-    if embedding_model_type == 'OpenAI':
-        vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
-                            embedding_function=AzureOpenAIEmbeddings(
-                                openai_api_type=os.getenv('API_TYPE'),
-                                azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
-                                openai_api_key=os.getenv('AZURE_OAI_KEY'),
-                                openai_api_version=os.getenv('API_VERSION'),
-                                azure_deployment="text-embedding-ada-002",
-                            ))
-    elif embedding_model_type == 'Hugging Face(local)':
-        try:
-            embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
-            vectorstore = chroma.Chroma(persist_directory=persist_vec_path, 
-                                        embedding_function=embeddings)
-        except:
-            # 如果没下载模型，则重新下载模型
-            progress(0.3, "Downloading embedding model...")
-            if local_embedding_model[:3] == 'bge':
-                snapshot_download(repo_id="BAAI/"+local_embedding_model,
-                                    local_dir=embedding_model_path)
-                embeddings = SentenceTransformerEmbeddings(model_name=embedding_model_path)
-                vectorstore = chroma.Chroma(persist_directory=persist_vec_path,
-                                            embedding_function=embeddings)
+    vectorstore =  vectorstore_init_create(persist_vec_path=persist_vec_path,
+                                           embedding_model_type=embedding_model_type,
+                                           local_embedding_model=local_embedding_model,
+                                           progress=gr.Progress())
 
     # else:
     #     raise gr.Error("You haven't chosen a knowledge base yet.")
@@ -442,11 +465,85 @@ def add_file_in_vectorstore(persist_vec_path:str,
     progress(1, desc="Adding the file to the knowledge base...")
     return gr.DataFrame(),gr.Dropdown()
 
-# def save_vectorstore(vectorstore:Chroma):
-#     '''
-#     Save vectorstore.
-#     '''
-#     vectorstore.persist()
+def ParentDocumentRetrieve_workflow(raw_file:list,
+                                    persist_vec_path:str,
+                                    embedding_model_type:Literal['OpenAI','Hugging Face(local)'],
+                                    local_embedding_model:str,
+                                    chat_model_type:str,
+                                    model_choice:str,
+                                    query:str,
+                                    progress=gr.Progress()
+                                    ):
+    '''
+    Use ParentDocumentRetriever to complete file split and retrieval (not reranked)
+    
+    Args:
+        raw_file: uploaded files, a list.
+        persist_vec_path: chroma persist path.
+        embedding_model_type: `OpenAI` or `Hugging Face(local)`
+        local_embedding_model: If `embedding_model_type` == `OpenAI`, there's only one model, here will give a specific embedding model. 
+        chat_model_type: `OpenAI` or  `Ollama`.
+        model_choice: Specific model you have chosen.
+        progress: create gradio progress bar.
+        query: The prompt you submited.
+
+    '''
+    '''docs'''
+    loaders = map(lambda doc:UnstructuredFileLoader(doc),raw_file)
+    docs = []
+    for loader in loaders:
+        docs.extend(loader.load())
+
+    '''text splitter'''
+    # If use `ParentDocumentRetrieve`, have to use `RecursiveCharacterTextSplitter`
+    # Using `CharacterTextSplitter` instead makes the result inferior to the regular processing.
+    child_splitter = RecursiveCharacterTextSplitter(chunk_size=500)
+    parent_splitter = RecursiveCharacterTextSplitter(chunk_size=2000)
+
+    # TODO：Need to find a way to save the InMemoryStore(), where will save the connections between source docs and splitted docs.
+    store = InMemoryStore()
+
+    '''vectorstore and embedding'''
+    vectorstore = vectorstore_init_create(persist_vec_path=persist_vec_path,
+                                          embedding_model_type=embedding_model_type,
+                                          local_embedding_model=local_embedding_model,
+                                          progress=gr.Progress())
+    
+    '''retriever'''
+    retriever = ParentDocumentRetriever(
+        vectorstore=vectorstore,
+        docstore=store,
+        child_splitter=child_splitter,
+        parent_splitter=parent_splitter,
+    )
+
+    retriever.add_documents(docs)
+
+    '''reranker'''
+    compressor = BgeRerank()
+    compression_retriever = ContextualCompressionRetriever(
+    base_compressor=compressor, base_retriever=retriever
+    )
+
+    '''llm'''
+    if chat_model_type == 'OpenAI':
+        llm = AzureChatOpenAI(model=model_choice,
+                        openai_api_type=os.getenv('API_TYPE'),
+                        azure_endpoint=os.getenv('AZURE_OAI_ENDPOINT'),
+                        openai_api_key=os.getenv('AZURE_OAI_KEY'),
+                        openai_api_version=os.getenv('API_VERSION'),
+                        # eployment_name=os.getenv('AZURE_OAI_ENDPOINT')+ "deployments/" +'gpt-35-turbo', 
+                        deployment_name=model_choice,
+                        temperature=0.7)
+    elif chat_model_type == 'Ollama':
+        llm = ChatOllama(model=model_choice)
+
+    kc = ConversationalRetrievalChain.from_llm(llm=llm, 
+                                           retriever=compression_retriever,
+                                           verbose=True,
+                                           return_source_documents=True)
+    result = kc.invoke({"question": query,"chat_history":[]})
+
 
 def delete_flie_in_vectorstore(file_list,
                                progress=gr.Progress()
