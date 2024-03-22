@@ -7,11 +7,13 @@
     "Chatbot info": "The conversation name will be used to name the file when you export your chat history.",
     "Input your prompt": "Input your prompt",
     "'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.": "'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.",
-    "Export Chat History":"Export Chat History",
-    "Send": "Send",
+    "Export Chat History":"📦 Export Chat History",
+    "Send": "📤️ Send",
     "Chat with file (Valid for 📁)": "Chat with file (Valid for 📁)",
     "Summarize (Valid only for uploaded file)": "Summarize (Valid only for uploaded file)",
     "Chat": "Chat",
+    "Clear":"🗑️ Clear",
+    "Regenerate":"🔄 Regenerate",
     "Commom Setting": "Commom Setting",
     "System Prompt": "System Prompt",
     "'Shift + Enter' to begin an new line.": "'Shift + Enter' to begin an new line.",
@@ -95,5 +97,7 @@
     "Create successfully!":"Create successfully!",
     "Search History":"Search History",
     "Library": "Library",
-    "Chat Model Type": "Chat Model Type"
+    "Chat Model Type": "Chat Model Type",
+    "Re-ranking the content of retrieved files":"Re-ranking the content of retrieved files--Need to download Rerank model",
+    "Re-rank": "Re-rank"
 }

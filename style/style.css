@@ -38,8 +38,10 @@
 }
 #btn_transparent {
     background-color: #609dff !important;
-    width: 10;
-    height: 10;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 #history {
@@ -50,14 +52,14 @@
     padding-left: env(safe-area-inset-left);
 }
 #history {
-    max-height: calc(100*var(--vh) - 65px - 61px);
+    display: flex;
+    flex-wrap: nowrap;
     max-height: calc(100*var(--vh) - 65px - calc(36px + 12px + max(12px, env(safe-area-inset-bottom)) + 1px ));
     /* overflow-y: auto; */
 }
 #history > div {
     border-radius: 0;
     background: none;
-    height: 100%;
     padding: 0;
 }
 #history > div > div {
@@ -71,12 +73,18 @@
     }
 }
 
+.col-container {
+    display: grid !important; 
+    grid-template-columns: 1fr 2.5fr 1fr !important;
+    grid-gap: 10px;
+}
+
 /* Give whole chat tab a scroll bar */
 #chat-tab-in-column {
-    overflow-y: auto;
     height: calc(100% - 66px);
-    max-height: calc(100*var(--vh) - 65px - 61px);
-    max-height: calc(100*var(--vh) - 65px - calc(36px + 12px + max(12px, env(safe-area-inset-bottom)) + 1px ));
+    overflow-x: hidden;
+    overflow-y: auto !important;
+    max-height: 130vh;
 }
 
 /* Make radio into a list */

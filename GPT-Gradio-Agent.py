@@ -9,6 +9,7 @@ import pandas
 from vecstore.vecstore import * 
 from vecstore.Agent import *
 from vecstore.search_engine import *
+from vecstore.reranker import *
 from gga_utils.common import *
 from gga_utils.theme import *
 from vecstore.template import *
@@ -141,7 +142,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     )
     usr_msg = gr.State()
     chat_his = gr.State([])
-    with gr.Row():
+    with gr.Row(elem_classes="col-container"):
         with gr.Column(elem_id="history"):
             with gr.Row():
                 add_dialog = gr.ClearButton(
@@ -313,7 +314,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                         info=i18n("Frequency penalty: the larger the value, the less likely it is to be a repeated word"))
                             presence_penalty = gr.Slider(-2, 2, value=0, step=0.1, label=i18n("presence_penalty"),
                                                         info=i18n("Topic freshness: the larger the value, the more likely it is to expand to new topics"))
-            with gr.Tab("RAG"):
+            with gr.Tab("RAG",elem_id="chat-tab-in-column"):
                 split_tmp = gr.State(['0'])
                 sum_result = gr.State()
                 # set a element to aviod indexerror
@@ -390,6 +391,9 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                     with gr.Accordion(i18n("File chat setting"),
                                       open=False,
                                       elem_id="Accordion"):
+                        if_rerank = gr.Checkbox(label=i18n("Rerank"),
+                                                value=True,
+                                                info=i18n("Re-ranking the content of retrieved files"))
                         filter_choice = gr.Radio(choices=["All", "Selected file"],
                                                 value="All",
                                                 label=i18n("Search scope"),
@@ -563,7 +567,7 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     refresh_file_cost.click(lambda:gr.Text(),[],[estimate_cost]).then(lambda:gr.File(),[],[file]).then(lambda:gr.Text(),[],[estimate_cost])
     chat_with_file.click(ask_file,
                          inputs=[chat_bot,message,file_answer,chat_model_type,model_choice,
-                                 sum_type,vector_path,file_list,filter_choice],
+                                 sum_type,vector_path,file_list,filter_choice,if_rerank],
                          outputs=[chat_bot,file_answer]
                          ).then(file_ask_stream,
                                 [chat_bot,file_answer],

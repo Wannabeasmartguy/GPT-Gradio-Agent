@@ -26,7 +26,8 @@ import json
 from gga_utils.common import *
 from gga_utils.vec_utils import *
 from local_llm.ollama import *
-from reranker import *
+from vecstore.reranker import *
+# from reranker import *
 import functools
 import os
 from dotenv import load_dotenv
@@ -759,6 +760,7 @@ def ask_file(file_ask_history_list:list,
             persist_vec_path,
             file_list,
             filter_type:str,
+            if_rerank:bool,
             ):
     '''
     send splitted file to LLM
@@ -779,6 +781,10 @@ def ask_file(file_ask_history_list:list,
     elif chat_model_type == 'Ollama':
         llm = ChatOllama(model=model_choice)
     
+    # 如果使用 rerank ，实例化 BgeRerank
+    if if_rerank:
+        compressor = BgeRerank()
+
     source_data = vectorstore.get()
     filter_goal = find_source_paths(file_list,source_data)
 
@@ -788,13 +794,26 @@ def ask_file(file_ask_history_list:list,
             # unselect file: retrieve whole knowledge base
             try:
                 chat_history_re = chat_memory.load_memory_variables({})['chat_memory']
-                qa = ConversationalRetrievalChain.from_llm(
-                                                            llm=llm,
-                                                            retriever=vectorstore.as_retriever(search_type="mmr"),
-                                                            # chain_type=sum_type,
-                                                            verbose=True,
-                                                            return_source_documents=True,
-                                                        )
+                retriever = vectorstore.as_retriever(search_type="mmr")
+                if if_rerank:
+                    compression_retriever = ContextualCompressionRetriever(base_compressor=compressor, 
+                                                                           base_retriever=retriever)
+                    qa = ConversationalRetrievalChain.from_llm(
+                                                                llm=llm,
+                                                                retriever=compression_retriever,
+                                                                # chain_type=sum_type,
+                                                                verbose=True,
+                                                                return_source_documents=True,
+                                                            )
+                elif not if_rerank:
+                    qa = ConversationalRetrievalChain.from_llm(
+                                                                llm=llm,
+                                                                retriever=retriever,
+                                                                # chain_type=sum_type,
+                                                                verbose=True,
+                                                                return_source_documents=True,
+                                                                )
+                # get chain's result
                 result = qa.invoke({"question": question_prompt,"chat_history": chat_history_re})
                 chat_memory.save_context({"input": result["question"]},{"output": result["answer"]})
             except (NameError):

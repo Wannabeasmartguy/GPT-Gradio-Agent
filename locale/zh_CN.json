@@ -7,11 +7,11 @@
     "Chatbot info":"对话名称将被用于导出聊天记录时的文件命名。",
     "Input your prompt": "输入你的指令",
     "'Shift + Enter' to begin an new line. Press 'Enter' can also send your Prompt to the LLM.": "'Shift + Enter' 来换行. 'Enter' 键也可以用来发送指令.",
-    "Export Chat History":"导出聊天记录",
+    "Export Chat History":"📦 导出聊天记录",
     "Delete previous round":"删除本轮",
-    "Clear": "清空当前对话",
-    "Regenerate":"重新生成",
-    "Send": "发送",
+    "Clear": "🗑️ 清空当前对话",
+    "Regenerate":"🔁 重新生成",
+    "Send": "📤️ 发送",
     "Chat with file (Valid for 📁)": "向知识库 📁 中的文件提问",
     "Summarize file content": "总结文件内容",
     "Chat": "Chat",
@@ -101,5 +101,7 @@
     "Search History":"搜索历史",
     "refresh":"刷新",
     "Library":"历史记录",
-    "Chat Model Type":"聊天模型类型"
+    "Chat Model Type":"聊天模型类型",
+    "Re-ranking the content of retrieved files":"重新排序检索到的文件内容——需下载 Rerank 模型",
+    "Re-ranking":"重新排序"
 }
