@@ -346,7 +346,8 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                     # ".jpeg", ".png",# images
                                                     ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"# Documents
                                                     ],
-                                        height=150)
+                                        # height=150
+                                        )
                             summarize = gr.Button(value=i18n("Summarize file content"),visible=False)
                             with gr.Row():
                                 estimate_cost = gr.Text(label=i18n("Estimated cost:"), 

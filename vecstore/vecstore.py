@@ -794,7 +794,7 @@ def ask_file(file_ask_history_list:list,
             # unselect file: retrieve whole knowledge base
             try:
                 chat_history_re = chat_memory.load_memory_variables({})['chat_memory']
-                retriever = vectorstore.as_retriever(search_type="mmr")
+                retriever = vectorstore.as_retriever(search_type="mmr",search_kwargs={'k':6})
                 if if_rerank:
                     compression_retriever = ContextualCompressionRetriever(base_compressor=compressor, 
                                                                            base_retriever=retriever)
@@ -824,7 +824,7 @@ def ask_file(file_ask_history_list:list,
             chat_history_re = chat_memory.load_memory_variables({})['chat_memory']
             qa = ConversationalRetrievalChain.from_llm(
                                                         llm=llm,
-                                                        retriever=vectorstore.as_retriever(search_type="mmr",search_kwargs={"filter":{"source":filter_goal[0]}}),
+                                                        retriever=vectorstore.as_retriever(search_type="mmr",search_kwargs={'k':6,"filter":{"source":filter_goal[0]}}),
                                                         # chain_type=sum_type,
                                                         verbose=True,
                                                         # memory=chat_memory,
