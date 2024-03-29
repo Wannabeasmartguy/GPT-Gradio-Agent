@@ -19,22 +19,24 @@ def process_chat_response(response):
 
 def send_ollama_chat_request(messages:list,
                       model:str="qwen:7b-chat", 
-                      url:str="http://localhost:11434/api/chat"):
+                      **option_kwargs
+                      ):
     """
     发送聊天请求
 
     Args:
-        url (str): 请求的URL
         model (str): 聊天模型
         messages (list): 聊天消息列表，每个消息包括角色和内容,与 OpenAI message 格式相同
 
     Yields:
         dict: 服务器返回的聊天结果
     """
+    url:str="http://localhost:11434/api/chat"
     data = {
         "model": model,
         "messages": messages,
-        "stream": False # 流式输出则注释掉此行
+        "stream": False, # 流式输出则注释掉此行
+        "options": option_kwargs
     }
     response = requests.post(url, json=data, stream=True)
     # yield from process_chat_response(response) # 流式输出则取消注释此行
