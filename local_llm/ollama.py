@@ -16,7 +16,8 @@ def process_chat_response(response):
             data = json.loads(line)
             yield data
 
-def send_chat_request(messages:list,
+
+def send_ollama_chat_request(messages:list,
                       model:str="qwen:7b-chat", 
                       url:str="http://localhost:11434/api/chat"):
     """
@@ -38,3 +39,17 @@ def send_chat_request(messages:list,
     response = requests.post(url, json=data, stream=True)
     # yield from process_chat_response(response) # 流式输出则取消注释此行
     return dict(response.json())
+
+
+def get_ollama_model_list(url:str = 'http://localhost:11434/api/tags'):
+    """
+    获取标签列表
+    Args:
+        url: Ollama 的API地址，默认为 http://localhost:11434/api/tags
+    """
+    response = requests.get(url)
+    tags = response.json()
+
+    # 获取所有模型的名称
+    model_list = [model['name'] for model in tags['models']]
+    return model_list

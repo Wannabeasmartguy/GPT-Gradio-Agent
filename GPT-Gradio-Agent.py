@@ -38,7 +38,7 @@ local_embedding_model = ['bge-base-zh-v1.5','bge-base-en-v1.5',
 # initialize the chat model setting
 model_source_choice = ["OpenAI","Ollama"]
 openai_chat_model = ["gpt-35-turbo","gpt-35-turbo-16k","gpt-4","gpt-4-32k","gpt-4-1106-preview","gpt-4-vision-preview"]
-ollama_chat_model = ["qwen:7b-chat"]
+ollama_chat_model = get_ollama_model_list()
 
 # 初始化主题
 set_theme = adjust_theme()
@@ -60,7 +60,8 @@ def model_token_correct(model_choice:str):
         "gpt-4":7000,
         "gpt-4-32k":30000,
         "gpt-4-1106-preview":128000,
-        "gpt-4-vision-preview":128000
+        "gpt-4-vision-preview":128000,
+        "qwen:7b-chat":32000
     }
     return model_maxtoken_dic[model_choice]
 

@@ -282,13 +282,13 @@ def deliver(message:str,
     elif chat_model_type == "Ollama":
         if context_length == 0:
             try:
-                response = send_chat_request(messages=[system_input,user_input],
+                response = send_ollama_chat_request(messages=[system_input,user_input],
                                              model=model_choice)
             except BadRequestError:
                 raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
         else:
             try:
-                response = send_chat_request(messages=chat_history,
+                response = send_ollama_chat_request(messages=chat_history,
                                              model=model_choice)
             except BadRequestError:
                 raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
