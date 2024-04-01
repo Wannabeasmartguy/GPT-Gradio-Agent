@@ -99,5 +99,6 @@
     "Library": "Library",
     "Chat Model Type": "Chat Model Type",
     "Re-ranking the content of retrieved files":"Re-ranking the content of retrieved files--Need to download Rerank model",
-    "Re-rank": "Re-rank"
+    "Re-rank": "Re-rank",
+    "Save All of Chat Configs": "Save All of Chat Configs"
 }

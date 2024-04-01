@@ -4,6 +4,8 @@ import json
 import os
 import locale
 import logging
+import inspect
+from typing import Callable, List
 
 class I18nAuto:
     def __init__(self):
@@ -275,6 +277,7 @@ def delete_conversation_from_json(name):
         if name in data:
             # 从字典中删除对应的键值对
             del data[name]
+            delete_chat_settings_in_config(name)
             print(f"对话 '{name}' 已成功删除。")
         else:
             print(f"对话 '{name}' 不存在。")
@@ -310,6 +313,7 @@ def modify_conversation_name(old_name, new_name):
                 if new_name == "":
                     gr.Info("The name can not be empty!(名称不能为空！)")
                     return gr.Textbox(value=old_name)
+                modify_chat_name_in_settings(old_name, new_name,filename = 'chat_config.json')
                 data[new_name] = data.pop(old_name)
                 print(f"对话名称 '{old_name}' 已成功修改为 '{new_name}'。")
 
@@ -326,11 +330,6 @@ def modify_conversation_name(old_name, new_name):
     else:
         print("JSON 文件不存在。")
 
-def rewrite_his_in_list(chat_name:str):
-    '''(WILL BE DELETED SOON)Updating the names of conversations in the Conversation Radio'''
-    global history_list
-    history_list[0] = chat_name
-    return history_list
 
 def insert_with_numbered_duplicates(lst:list, item:str):
    '''
@@ -371,3 +370,115 @@ def rename_duplicates(#lst
                 count_dict[item] = 0
     else:
         pass
+
+
+def save_all_settings(*args) -> None :
+    '''
+    将所有设置保存到chat_config.json中
+    保存格式如下：
+    {
+        "chat_name1": {
+            "system_prompt": "你是一个人工智能助手。",
+            temperature: 0.5,
+            max_tokens: 1000,
+        },
+        "chat_name2": {
+            "system_prompt": "你是一个Python工程师。",
+            temperature: 0.7,
+            max_tokens: 1000,
+        }
+    }
+    '''
+    filename = 'chat_config.json'
+    variable_list = ["chat_name","System_Prompt","Context_length","Temperature",
+                     "max_tokens","top_p","frequency_penalty","presence_penalty"]
+    
+    # 检查 JSON 文件是否存在
+    if os.path.isfile(filename):
+        # 如果文件已存在，则读取文件内容并解析为字典
+        with open(filename, 'r', encoding='gb18030') as file:
+            data = json.load(file)
+            
+    else:
+        # 如果文件不存在，则创建一个新的字典
+        data = {}
+
+    # 先把 chat_name 拿出来
+    chat_name = args[0]
+
+    # 以 chat_name 为键，创建一个字典用于保存当前对话的设置
+    chat_config = {}
+    
+    # 将 variable_list 作为键， args 为值，保存到 chat_config 字典中
+    for i in range(len(variable_list)):
+        chat_config[variable_list[i]] = args[i]
+    
+    # 删除掉重复的 chat_name
+    del chat_config["chat_name"]
+
+    # 将 chat_config 字典添加到 data 字典中
+    data[chat_name] = chat_config
+    
+    # 将更新后的 data 字典转换为 JSON 格式
+    json_data = json.dumps(data, ensure_ascii=False, indent=4)
+    
+    # 将 JSON 数据写入文件
+    with open(filename, 'w', encoding='gb18030') as file:
+        file.write(json_data)
+
+
+def modify_chat_name_in_settings(old_name, new_name,filename = 'chat_config.json'):
+    '''
+    将 chat_name 修改为新的名称
+    '''
+    # 检查 JSON 文件是否存在
+    if os.path.isfile(filename):
+        # 如果文件存在，则读取文件内容并解析为字典
+        with open(filename, 'r', encoding='gb18030') as file:
+            data = json.load(file)
+        
+        # 检查要修改的 chat_name 是否存在于字典中
+            if old_name in data:
+                # 判断新名称是否与旧名称相同
+                if new_name in data:
+                    # 相同，则不改
+                    return
+                else:
+                    # 不相同，则替换 chat_name
+                    data[new_name] = data.pop(old_name)
+                    gr.Info("Chat name has been changed!(对话名称已更改！)")
+                    
+                    # 将更新后的 data 字典保存入 JSON
+                    json_data = json.dumps(data, ensure_ascii=False, indent=4)
+                    
+                    # 将 JSON 数据写入文件
+                    with open(filename, 'w', encoding='gb18030') as file:
+                        file.write(json_data)
+
+
+def delete_chat_settings_in_config(name,filename = 'chat_config.json'):
+    '''
+    删除 chat_config.json 中指定对话的设置
+
+    Args:
+        name (str): 要删除的对话名称
+        filename (str, optional): chat_config.json 的路径. Defaults to 'chat_config.json'.
+    '''
+    # 检查 JSON 文件是否存在
+    if os.path.isfile(filename):
+        # 如果文件存在，则读取文件内容并解析为字典
+        with open(filename, 'r', encoding='gb18030') as file:
+            data = json.load(file)
+            
+        # 检查要删除的对话名称是否存在于字典中
+            if name in data:
+                # 从字典中删除对应的键值对
+                del data[name]
+                print(f"对话 '{name}' 的设置已成功删除。")
+                
+                # 将更新后的 data 字典保存入 JSON
+                json_data = json.dumps(data, ensure_ascii=False, indent=4)
+                
+                # 将 JSON 数据写入文件
+                with open(filename, 'w', encoding='gb18030') as file:
+                    file.write(json_data)

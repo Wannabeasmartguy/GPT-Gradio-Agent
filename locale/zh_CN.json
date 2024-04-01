@@ -103,5 +103,6 @@
     "Library":"历史记录",
     "Chat Model Type":"聊天模型类型",
     "Re-ranking the content of retrieved files":"重新排序检索到的文件内容——需下载 Rerank 模型",
-    "Re-ranking":"重新排序"
+    "Re-ranking":"重新排序",
+    "Save All of Chat Configs":"保存所有聊天配置"
 }

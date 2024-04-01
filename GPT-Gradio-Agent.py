@@ -301,7 +301,8 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                             System_Prompt = gr.Textbox("You are a helpful AI.", label=i18n("System Prompt"),
                                                     info=i18n("'Shift + Enter' to begin an new line."))
                             Context_length = gr.Slider(0, 32, value=4, step=1, label=i18n("Context length"),
-                                                    info=i18n("The number of historical messages carried per request"))                    
+                                                    info=i18n("The number of historical messages carried per request"))    
+                            save_chat_config = gr.Button(value=i18n("Save All of Chat Configs"))                
             
                         with gr.Accordion(i18n("Additional Setting"),
                                           elem_id="Accordion"):
@@ -423,18 +424,25 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                     )
 
     # Radio control
-    add_dialog.click(add_conversation_to_json,
-                     inputs=[chat_name,chat_bot]
-                     ).success(lambda:gr.Radio(choices=get_all_conversation_names(),
-                                                value=get_last_conversation_name()),
-                                                outputs=Historylist
-                                ).success(lambda: gr.Chatbot(value=''), 
-                                          [],
-                                          [chat_bot]
-                                          ).success(lambda: gr.Textbox(value=get_last_conversation_name()), 
-                                                    [],
-                                                    [chat_name]
-                                                    )
+    add_dialog.click(
+        add_conversation_to_json,
+        inputs=[chat_name,chat_bot]
+    ).success(
+        lambda:gr.Radio(choices=get_all_conversation_names(),
+                        value=get_last_conversation_name()),
+                        outputs=Historylist
+    ).success(
+        lambda: gr.Chatbot(value=''), 
+        [],
+        [chat_bot]
+    ).success(
+        lambda: gr.Textbox(value=get_last_conversation_name()), 
+        [],
+        [chat_name]
+    ).then(
+        save_all_settings,
+        inputs=[chat_name,System_Prompt,Context_length,Temperature,max_tokens,top_p,frequency_penalty,presence_penalty]
+    )
     
     delete_dialog.click(delete_conversation_from_json,
                         inputs=[chat_name]
@@ -456,16 +464,18 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
                                                                [chat_bot,Context_length]
                                                                ).success(lambda: gr.Info(i18n("Load dialog memory success!")))
 
-    chat_name.blur(modify_conversation_name,
-                   inputs=[Historylist,chat_name],
-                   outputs=[chat_name]).success(lambda chat_name: gr.Radio(
-                                                                    show_label=False,
-                                                                    interactive=True,
-                                                                    value=chat_name,
-                                                                    choices=get_all_conversation_names(),
-                                                                    ),
-                                                            inputs=chat_name,outputs=[Historylist]
-                                                )
+    chat_name.blur(
+        modify_conversation_name,
+        inputs=[Historylist,chat_name],
+        outputs=[chat_name]
+    ).success(lambda chat_name: gr.Radio(
+                        show_label=False,
+                        interactive=True,
+                        value=chat_name,
+                        choices=get_all_conversation_names(),
+                        ),
+               inputs=chat_name,outputs=[Historylist]
+    )
 
     # Merge all handles that require input and output.
     input_param = [message, chat_model_type,model_choice, chat_his, chat_bot, System_Prompt, 
@@ -560,6 +570,9 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     
     export_his.click(export_to_markdown,[chat_bot,chat_name])
     
+    save_chat_config.click(save_all_settings,
+                           inputs=[chat_name,System_Prompt,Context_length,Temperature,max_tokens,top_p,frequency_penalty,presence_penalty])
+ 
     '''
     chat_file button event
     '''
