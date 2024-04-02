@@ -132,8 +132,11 @@ def sum_stream(summarize_result,chatbot):
         time.sleep(0.02)
         yield chatbot
 
+
 # <---------- GUI ---------->
-with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
+with gr.Blocks(title="GPT-Gradio-Agent",
+               theme=set_theme,
+               css='style\style.css') as demo:
     gr.Markdown(
         '''
         # <center>GPT AGENT<center>
@@ -701,6 +704,8 @@ with gr.Blocks(theme=set_theme,css='style\style.css') as demo:
     refresh_search_history_list_btn.click(lambda:gr.Dropdown(choices=rag_engine.get_search_history()),[],[search_history_dropdown])
     search_history_dropdown.change(rag_engine.get_search_history_by_key,
                                    [search_history_dropdown],[search_history_content,search_history_sources])
+
+
 demo.queue().launch(inbrowser=True,debug=True,show_api=False
                     #auth=[("admin","123456")],auth_message="欢迎使用 GPT-Gradio-Agent ,请输入用户名和密码"
                     )
