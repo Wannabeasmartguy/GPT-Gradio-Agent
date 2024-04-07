@@ -4,15 +4,29 @@
 
 Build your own GPT Agent and manage your GPT-driven knowledge base with Azure OpenAI API (or OpenAI API) and Gradio! 
 
+## Features
+
+- [x] 🤖 Chatbox Interface
+- [x] 🔧 detailed parameterization
+- [x] 📚️ GPT-driven(or any LLM-driven) knowledge base, and supports knowledge base management and RAG (Retrieval Enhanced Generation)
+- [x] 👓️ Excellent RAG retrieval capability (supports hybrid retrieval, reranking, specified file retrieval)
+- [x] 🖼️ Dall-E-3 Image Generator
+- [x] 🔍️ RAG Search
+- [x] 🖥️ Enables **FULLY LOCAL** embedding (Hugging Face) and chat (Ollama) (if you want OR don't have Azure OpenAI). This means that you can run GPT-Gradio-Agent's chat and knowledge base locally without connecting to the Azure OpenAI API!
+- [x] 📦 Packaged in a portable package, download and ready to use
+- [ ] 🛜 Fetch web content and dialog via web scraper; and optionally store it in a knowledge base.
+
 > If you like this project, please star for it, this is the greatest encouragement to me!
 
-## Basic Chatbox Interface
+## Details
+
+### Basic Chatbox Interface
 
 This is the basic chatbox interface where you can have a conversation directly with GPT, let them play the role of an expert and answer your questions with system prompts, and manage your multiple conversations.
 
 ![chat界面 v0 7](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/dfbcd600-075c-4306-8a3b-b87a50290316)
 
-## GPT-driven knowledge base
+### GPT-driven knowledge base
 
 In this interface, you can **create and manage your own Knowledge Base** (CRUD) and **have GPT answer your questions in conjunction with **specified documents** (or **the entire Knowledge Base**), enabling RAG (Retrieval Augmented Generation)
 
@@ -20,9 +34,9 @@ Very efficient!
 
 ![v0 7 RAG 界面](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/903ef0ba-20f4-449e-ac31-654953b930ba)
 
-### Knowledge Base Management
+#### Knowledge Base Management
 
-#### Knowledge Base Details
+##### Knowledge Base Details
 
 **v0.9.0 New**: You can now view not only the file directory of the knowledge base, but also the specific content in the knowledge base, and understand the specific chunks.
 
@@ -36,13 +50,13 @@ It's important to note that when you load a knowledge base, it will automaticall
 
 Also, it's a stand-alone module, which means you can use it to view Knowledge Base A when you open Knowledge Base B at the same time!
 
-#### Local Embedding
+##### Local Embedding
 
 > v0.12.0 Added.
 
 Now you can select `Hugging Face(local)` in `Embedding Model Type` and choose your own supported embedding model for vector embedding (currently supported: BGE v1.5 series).
 
-#### Brand New Knowledge Base Management
+##### Brand New Knowledge Base Management
 
 > Added in v0.12.0, this change is a leapfrog change and requires a manual migration of the knowledge base.
 
@@ -72,13 +86,13 @@ It's worth emphasizing that after selecting a knowledge base in the knowledge ba
 
 I don't have a good solution for this at the moment, so if you have a good idea, please feel free to submit an Issue. So for now, it is highly recommended that **only when creating a new knowledge base adjust this option, and not modify it at any other time**.
 
-## Dall-E-3 Image Generator
+### Dall-E-3 Image Generator
 
 If you have access to the Azure OpenAI API, it's a waste not to try the Dall-E-3 model to generate images!
 
 ![Dall-E-3](https://github.com/Wannabeasmartguy/GPT-Gradio-Agent/assets/107250451/6b8c7e7c-8c75-41a0-b0ce-46f69bb7a9ef)
 
-## RAG Search
+### RAG Search
 
 By harnessing the extensive knowledge of search engines (Bing Search) in conjunction with the exceptional capabilities of LLM, you can obtain precise answers and a wide range of references. It's inspired by [search_with_lepton](https://github.com/leptonai/search_with_lepton)
 
@@ -143,6 +157,15 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
 - [x] Dialogue management
 
 - [x] **RAG(Retrieval Augmented Generation)**
+  
+  - [ ] *Multiple optimizations of searches* -- ongoing
+    
+    - [x] *hybrid retrieval*
+    
+    - [x] *reranking*
+    
+    - [x] specified file retrieval
+  
 
   - [x] **Chat with single file**
   
@@ -162,7 +185,7 @@ After extracting, follow **Step 1 and Step 2 above** to configure the environmen
   
   - [x] Saving and Viewing Historical Search History
 
-- [x] **Web requester(By prompts)**
+- [ ] **Web scraper and interaction with knowledge base**
 
 - [ ] Import and export chat history
   
