@@ -81,8 +81,10 @@ def upload_file(file_obj,
                 progress=gr.Progress()
                 ):
     '''
-    Upload your file to chat \n
-      \n
+    Upload your file to chat 
+    Args:
+        file_obj: the file you want to upload.注：这个将改为文件列表
+        split_tmp: the list of splitted files.
     return: 
     list of files are splitted.
     '''
@@ -397,6 +399,10 @@ with gr.Blocks(title="GPT-Gradio-Agent",
                     with gr.Accordion(i18n("File chat setting"),
                                       open=False,
                                       elem_id="Accordion"):
+                        if_hybrid_retrieve = gr.Checkbox(label=i18n("Hybrid Retrieve"),
+                                                         value=True,
+                                                         info=i18n("Hybrid search achieves complementarity between multiple search techniques by combining multiple search systems."))
+                        hybrid_retrieve_weight = gr.Slider(minimum=0.0, maximum=1.0, step=0.1, value=0.5, label=i18n("Hybrid Retrieve Weight"),info=i18n("Using BM25 as the sparse retriever, the higher the value, the more inclined the sparse retriever results."))
                         if_rerank = gr.Checkbox(label=i18n("Rerank"),
                                                 value=True,
                                                 info=i18n("Re-ranking the content of retrieved files"))
@@ -410,7 +416,8 @@ with gr.Blocks(title="GPT-Gradio-Agent",
                                                      (i18n("large file(map rerank, for chat)"),"map_rerank")],
                                             value="refine",
                                             label=i18n("File size type"),
-                                            info=i18n("Only works on the file selected in the file box. If the number of words to be summarized is large, select 'lagre size' (selecting 'small size' may result in exceeding the GPT's maximum Token)."))
+                                            info=i18n("Only works on the file selected in the file box. If the number of words to be summarized is large, select 'lagre size' (selecting 'small size' may result in exceeding the GPT's maximum Token)."),
+                                            visible=False)
             with gr.Tab("Agent"):
                 with gr.Tab(i18n("Web Request")):
                     sum_url = gr.Textbox(label=i18n("URL"),
@@ -584,8 +591,8 @@ with gr.Blocks(title="GPT-Gradio-Agent",
     file.clear(lambda:gr.Textbox(value=''),[],[estimate_cost])
     refresh_file_cost.click(lambda:gr.Text(),[],[estimate_cost]).then(lambda:gr.File(),[],[file]).then(lambda:gr.Text(),[],[estimate_cost])
     chat_with_file.click(ask_file,
-                         inputs=[chat_bot,message,file_answer,chat_model_type,model_choice,
-                                 sum_type,vector_path,file_list,filter_choice,if_rerank],
+                         inputs=[chat_bot,message,file_answer,chat_model_type,model_choice,sum_type,vector_path,
+                                 file_list,filter_choice,if_rerank,if_hybrid_retrieve,hybrid_retrieve_weight],
                          outputs=[chat_bot,file_answer]
                          ).then(file_ask_stream,
                                 [chat_bot,file_answer],

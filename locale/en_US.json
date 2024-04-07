@@ -100,5 +100,8 @@
     "Chat Model Type": "Chat Model Type",
     "Re-ranking the content of retrieved files":"Re-ranking the content of retrieved files--Need to download Rerank model",
     "Re-rank": "Re-rank",
-    "Save All of Chat Configs": "Save All of Chat Configs"
+    "Save All of Chat Configs": "Save All of Chat Configs",
+    "Hybrid search achieves complementarity between multiple search techniques by combining multiple search systems.":"Hybrid search achieves complementarity between multiple search techniques by combining multiple search systems.",
+    "Hybrid Retrieve Weight": "Hybrid Retrieve Weight",
+    "Using BM25 as the sparse retriever, the higher the value, the more inclined the sparse retriever results.":"Using BM25 as the sparse retriever, the higher the value, the more inclined the sparse retriever results."
 }

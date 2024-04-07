@@ -9,9 +9,10 @@ from langchain_community.embeddings.sentence_transformer import (
     SentenceTransformerEmbeddings,
 )
 from langchain_community.document_loaders import TextLoader,UnstructuredFileLoader
+from langchain_community.retrievers import BM25Retriever
 from langchain.text_splitter import CharacterTextSplitter,RecursiveCharacterTextSplitter
 from langchain.storage import InMemoryStore
-from langchain.retrievers import ContextualCompressionRetriever,ParentDocumentRetriever
+from langchain.retrievers import ContextualCompressionRetriever,ParentDocumentRetriever,EnsembleRetriever
 
 from huggingface_hub import snapshot_download
 from typing import Literal
@@ -751,6 +752,112 @@ def refresh_file_list(df):
     gr.Info('Successfully update kowledge base.')
     return gr.Dropdown.update(choices=file_list)
 
+
+def filter_documents_by_source(metadatas:list[dict],
+                               specified_source:list) -> List[dict]:
+    """
+    筛选出 metadatas 中具有指定 source 值的 Document 元素。用于没有内置 filter 参数的 Retriever doc筛选(如BM25)。
+
+    Args:
+        metadatas (list[dict]): 包含 Document 元数据的列表。
+        specified_source (list): 指定的 source 值。
+        
+    Returns:
+        list[dict]: 筛选后的 Document 元数据列表。
+    """
+    # 使用列表推导式筛选出 metadata 中 source 与指定值相匹配的 Document 元素
+    filtered_documents = [
+        doc for doc in metadatas if doc['source'] in specified_source[0]
+    ]
+    return filtered_documents
+
+
+def create_conversational_retrieval_system(if_hybrid_retrieve:bool, 
+                                           hybrid_retriever_weight:float, 
+                                           if_rerank:bool, 
+                                           compressor, 
+                                           llm,
+                                           filter_goal:list,
+                                           filter_type=Literal['All', 'Selected file']):
+    """
+    创建并返回一个会话检索系统实例。
+
+    Args:
+        if_hybrid_retrieve (bool): 是否使用混合检索器。
+        hybrid_retriever_weight (float): 混合检索器中BM25检索器的权重。
+        if_rerank (bool): 是否进行重排。
+        compressor : 用于实现重排序的压缩器。
+        llm (object): 语言模型实例。
+        filter_goal (list): 筛选目标。经过 find_source_paths() 找到的指定文档。
+        filter_type (Literal['All', 'Selected file']): 筛选类型。
+
+    Return:
+    - qa (object): 会话检索系统实例。
+    """
+
+    sparse_retrieve_kwargs = {
+                'k': 6
+            }
+    if filter_type == "All":
+        vec_retrieve_search_kwargs = {
+            'k': 6
+        }
+        metadatas_in_sparse_retrieve = vectorstore.get()["metadatas"]
+        
+    elif filter_type == "Selected file":
+        vec_retrieve_search_kwargs = {
+            'k': 6,
+            "filter":{
+                "source":filter_goal[0]
+            }
+        }
+        # metadatas_in_sparse_retrieve = filter_documents_by_source(vectorstore.get()["metadatas"],filter_goal)
+        metadatas_in_sparse_retrieve = vectorstore.get()["metadatas"]
+
+    retriever = vectorstore.as_retriever(search_type="mmr", search_kwargs=vec_retrieve_search_kwargs)
+
+    if if_hybrid_retrieve:
+        try:
+            bm25_retriever = BM25Retriever.from_texts(
+                vectorstore.get()["documents"],
+                metadatas=metadatas_in_sparse_retrieve,
+                kwargs=sparse_retrieve_kwargs
+            )
+            ensemble_retriever = EnsembleRetriever(
+                retrievers=[bm25_retriever, retriever],
+                weights=[hybrid_retriever_weight, 1 - hybrid_retriever_weight]
+            )
+        except Exception as e:
+            raise gr.Error("Could not import rank_bm25, please install with `pip install rank_bm25`") from e
+
+    if if_rerank:
+        if if_hybrid_retrieve:
+            compression_retriever = ContextualCompressionRetriever(
+                base_compressor=compressor,
+                base_retriever=ensemble_retriever
+            )
+        else:
+            compression_retriever = ContextualCompressionRetriever(
+                base_compressor=compressor,
+                base_retriever=retriever
+            )
+        qa = ConversationalRetrievalChain.from_llm(
+            llm=llm,
+            retriever=compression_retriever,
+            verbose=True,
+            return_source_documents=True,
+        )
+    else:
+        qa = ConversationalRetrievalChain.from_llm(
+            llm=llm,
+            retriever=retriever,
+            verbose=True,
+            return_source_documents=True,
+        )
+
+    return qa
+
+
 def ask_file(file_ask_history_list:list,
             question_prompt: str,
             file_answer:list,
@@ -761,9 +868,16 @@ def ask_file(file_ask_history_list:list,
             file_list,
             filter_type:str,
             if_rerank:bool,
+            if_hybrid_retrieve:bool,
+            hybrid_retriever_weight:float,
             ):
     '''
-    send splitted file to LLM
+    Ask question to the knowledge base.
+    
+    Args:
+        file_ask_history_list: list, the history of the question and answer.
+        question_prompt: str, the question to be asked.
+
     '''
     global chat_memory 
     if chat_memory == None:
@@ -790,50 +904,17 @@ def ask_file(file_ask_history_list:list,
 
     if persist_vec_path != None:
         # Codes here in "if" may be deleted or modified later
-        if filter_type == "All":    
-            # unselect file: retrieve whole knowledge base
-            try:
-                chat_history_re = chat_memory.load_memory_variables({})['chat_memory']
-                retriever = vectorstore.as_retriever(search_type="mmr",search_kwargs={'k':6})
-                if if_rerank:
-                    compression_retriever = ContextualCompressionRetriever(base_compressor=compressor, 
-                                                                           base_retriever=retriever)
-                    qa = ConversationalRetrievalChain.from_llm(
-                                                                llm=llm,
-                                                                retriever=compression_retriever,
-                                                                # chain_type=sum_type,
-                                                                verbose=True,
-                                                                return_source_documents=True,
-                                                            )
-                elif not if_rerank:
-                    qa = ConversationalRetrievalChain.from_llm(
-                                                                llm=llm,
-                                                                retriever=retriever,
-                                                                # chain_type=sum_type,
-                                                                verbose=True,
-                                                                return_source_documents=True,
-                                                                )
-                # get chain's result
-                result = qa.invoke({"question": question_prompt,"chat_history": chat_history_re})
-                chat_memory.save_context({"input": result["question"]},{"output": result["answer"]})
-            except (NameError):
-                raise gr.Error("You have not load kownledge base yet.")
-        elif filter_type == "Selected file":
-            # only selected one file
-            # Retrieve the specified knowledge base with filter
-            chat_history_re = chat_memory.load_memory_variables({})['chat_memory']
-            qa = ConversationalRetrievalChain.from_llm(
-                                                        llm=llm,
-                                                        retriever=vectorstore.as_retriever(search_type="mmr",search_kwargs={'k':6,"filter":{"source":filter_goal[0]}}),
-                                                        # chain_type=sum_type,
-                                                        verbose=True,
-                                                        # memory=chat_memory,
-                                                        return_source_documents=True,
-                                                    )
-            
-            # get chain's result
-            result = qa.invoke({"question": question_prompt,"chat_history": chat_history_re})
-            chat_memory.save_context({"input": result["question"]},{"output": result["answer"]})
+        chat_history_re = chat_memory.load_memory_variables({})['chat_memory']
+        qa = create_conversational_retrieval_system(if_hybrid_retrieve=if_hybrid_retrieve,
+                                                    hybrid_retriever_weight=hybrid_retriever_weight,
+                                                    if_rerank=if_rerank,
+                                                    compressor=compressor,
+                                                    llm=llm,
+                                                    filter_goal=filter_goal,
+                                                    filter_type=filter_type
+        )
+        result = qa.invoke({"question": question_prompt,"chat_history": chat_history_re})
+        chat_memory.save_context({"input": result["question"]},{"output": result["answer"]})
 
         usr_prob = result["question"]
     # if there is no file, let it become a common chat model

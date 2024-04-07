@@ -104,5 +104,8 @@
     "Chat Model Type":"聊天模型类型",
     "Re-ranking the content of retrieved files":"重新排序检索到的文件内容——需下载 Rerank 模型",
     "Re-ranking":"重新排序",
-    "Save All of Chat Configs":"保存所有聊天配置"
+    "Save All of Chat Configs":"保存所有聊天配置",
+    "Hybrid search achieves complementarity between multiple search techniques by combining multiple search systems.":"混合检索通过多个检索系统的组合，实现了多个检索技术之间的互补。",
+    "Hybrid Retrieve Weight":"混合检索权重",
+    "Using BM25 as the sparse retriever, the higher the value, the more inclined the sparse retriever results.":"使用 BM25 作为稀疏检索器，值越大，检索结果越倾向于稀疏检索器。"
 }
