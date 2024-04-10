@@ -19,10 +19,9 @@ from Agent.agent_tools import *
 from Agent.agent import *
 
 # import langchain to chat with file
-from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.document_loaders import DirectoryLoader,PyPDFLoader,UnstructuredFileLoader
-from langchain.chains import RetrievalQA
+from langchain_community.document_loaders.pdf import PyPDFLoader
+from langchain_community.document_loaders.unstructured import UnstructuredFileLoader
 
 load_dotenv()
 
@@ -67,23 +66,12 @@ def stream(history_list:list,chat_history:list[dict],if_agent_mode:bool=False):
     '''
     Used to make LLM output looks like stream(Not real stream output).
     '''
-    if False:
-        if len(chat_history) == 1:
-            bot_message = chat_history[0]
-        else:
-            bot_message = chat_history[-1]
-        history_list[-1][1] = ""
-        for character in bot_message:
-            history_list[-1][1] += character
-            time.sleep(0.02)
-            yield history_list
-    else:
-        bot_message = chat_history[-1]['content']
-        history_list[-1][1] = ""
-        for character in bot_message:
-            history_list[-1][1] += character
-            time.sleep(0.02)
-            yield history_list
+    bot_message = chat_history[-1]['content']
+    history_list[-1][1] = ""
+    for character in bot_message:
+        history_list[-1][1] += character
+        time.sleep(0.02)
+        yield history_list
 
 def upload_file(file_obj,
                 split_tmp,

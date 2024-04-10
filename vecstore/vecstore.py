@@ -3,13 +3,14 @@ from langchain_community.vectorstores import chroma
 from langchain_community.chat_models.ollama import ChatOllama
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
 from langchain_openai.chat_models.azure import AzureChatOpenAI
-from langchain.chains import RetrievalQA,ConversationalRetrievalChain
+from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain_community.embeddings.sentence_transformer import (
     SentenceTransformerEmbeddings,
 )
-from langchain_community.document_loaders import TextLoader,UnstructuredFileLoader
-from langchain_community.retrievers import BM25Retriever
+from langchain_community.document_loaders.unstructured import UnstructuredFileLoader
+from langchain_community.document_loaders.text import TextLoader
+from langchain_community.retrievers.bm25 import BM25Retriever
 from langchain.text_splitter import CharacterTextSplitter,RecursiveCharacterTextSplitter
 from langchain.storage import InMemoryStore
 from langchain.retrievers import ContextualCompressionRetriever,ParentDocumentRetriever,EnsembleRetriever
@@ -236,6 +237,28 @@ def deliver(message:str,
             # return chat_history_list,message,trans_chat_history
 
             '''不再传入memory，而是直接使用内置chat_memory'''
+            openai_agent = OpenAIChatAgent(llm=llm,tools=tools)
+            # 将作为chat_history_list传入的chatbox读取为chat_history
+            if chat_history_list != [] and chat_history_list != None:
+                # 将chat_history_list加载进Agent的Memory
+                for round in chat_history_list:
+                    question = round[0]
+                    answer = round[1]
+                    openai_agent.chat_memory.save_context({"input": question},{"output": answer})
+            
+            reply = openai_agent.invoke({"input":message})
+
+            # 构建一个只添加了human message的chat_history_list，用于显示在页面上
+            chat_history_list.append([message,None])
+
+            # 构建一个完整的chat_history，用于后面的伪流式输出
+            openai_agent.chat_memory.save_context({"input": message},{"output": reply})
+            chat_history = convert_messages(openai_agent.chat_memory.load_memory_variables({})["chat_memory"])
+            
+            # 为了避免重复记忆，需要清空Agent的Memory
+            openai_agent.chat_memory.clear()
+            return chat_history_list,message,chat_history
+
         else:
             common_agent = CommonAgent(llm=llm,tools=tools)
             reply = common_agent.invoke({"input":message})

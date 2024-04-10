@@ -164,7 +164,7 @@ class OpenAIChatAgent:
         '''
         chat_history = self.chat_memory.load_memory_variables({})[self.MEMORY_KEY]
         answer = self.agent_executor.invoke({"input": query,self.MEMORY_KEY: chat_history})
-        self.chat_memory.save_context({"input": query},{"output": answer["output"]})
+        # self.chat_memory.save_context({"input": query},{"output": answer["output"]})
         return answer["output"]
     
     def get_memory(self) -> List[BaseMessage]:
