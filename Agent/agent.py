@@ -1,7 +1,7 @@
-from langchain_community.chat_models import ChatOllama
+from langchain_community.chat_models.ollama import ChatOllama
 from langchain_openai.chat_models.azure import AzureChatOpenAI
 from langchain_core.runnables.base import RunnableSerializable
-from langchain_core.tools import tool
+from langchain_core.tools import tool,StructuredTool
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser,StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -17,8 +17,11 @@ from langchain.tools.render import render_text_description
 from operator import itemgetter
 from typing import List,Literal
 from dotenv import load_dotenv
+from Agent.agent_tools import *
+import importlib
 import os
 load_dotenv()
+tools = [web_crewler,do_not_need_tools]
 
 
 def create_llm(model_type:Literal["OpenAI","Ollama"],
@@ -122,8 +125,7 @@ class CommonAgent:
     
 
 class OpenAIChatAgent:
-    def __init__(self, llm, tools:list):
-        self.llm = llm.bind_tools(tools)
+    def __init__(self, llm:AzureChatOpenAI, tools:list[StructuredTool]=tools):
         self.tools = tools
         self.MEMORY_KEY = "chat_memory"
         self.chat_memory = ConversationBufferMemory(memory_key=self.MEMORY_KEY, return_messages=True)
@@ -140,7 +142,7 @@ class OpenAIChatAgent:
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
         )
-        
+        self.llm = llm.bind_tools(tools)
         self.agent = (
             {
                 "input": lambda x: x["input"],
@@ -174,3 +176,55 @@ class OpenAIChatAgent:
     def get_memory_list(self) -> List[str]:
         '''Get the memory of the agent(pure text)'''
         return [message.content for message in self.get_memory()]
+
+
+def struct_tools(tools:list[str]) -> list[StructuredTool]:
+    '''
+    将工具列表转换为 StructuredTool 列表
+    '''
+    if isinstance(tools, list) and all(isinstance(tool, str) for tool in tools):
+        callable_functions = []
+        module = importlib.import_module("agent_tools")
+        for name in tools:
+            if isinstance(name, str):
+                try:
+                    function = getattr(module, name)
+                    if callable(function):
+                        callable_functions.append(function)
+                    else:
+                        print(f"Warning: {name} is not a callable object.")
+                except AttributeError:
+                    print(f"Warning: {name} does not exist in {module}.")
+                    
+        return callable_functions
+
+# if __name__ == "__main__":
+
+#     module = importlib.import_module('agent_tools')
+#     # 初始化一个空列表，用于存储函数名称
+#     tools = []
+
+#     # 遍历模块的__dict__属性，并筛选出函数
+#     for name, obj in module.__dict__.items():
+#         if callable(obj) and not name.startswith('__'):
+#             tools.append(name)
+
+#     tools = [name for name, obj in module.__dict__.items() if callable(obj) and not name.startswith('__') and name != "tool"]
+#     print(tools)
+
+
+#     if isinstance(tools, list) and all(isinstance(tool, str) for tool in tools):
+#         callable_functions = []
+#         module = importlib.import_module("agent_tools")
+#         for name in tools:
+#             if isinstance(name, str):
+#                 try:
+#                     function = getattr(module, name)
+#                     if callable(function):
+#                         callable_functions.append(function)
+#                     else:
+#                         print(f"Warning: {name} is not a callable object.")
+#                 except AttributeError:
+#                     print(f"Warning: {name} does not exist in {module}.")
+#         tools = callable_functions
+#     print(tools)

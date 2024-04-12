@@ -4,6 +4,7 @@ import time
 import os
 from dotenv import load_dotenv
 import pandas
+import importlib
 
 # Customized Modules
 from vecstore.vecstore import * 
@@ -46,6 +47,15 @@ set_theme = adjust_theme()
 i18n = I18nAuto()  
 # Initialize knowledge base
 kb = GRKnowledgeBase()
+
+# 获取所有 tools
+module = importlib.import_module('Agent.agent_tools')
+
+# 使用列表表达式将所有工具添加到 tools 列表中
+# 遍历模块的__dict__属性，并筛选出函数工具
+tools = [name for name, obj in module.__dict__.items() if callable(obj) and not name.startswith('__') and name != "tool"]
+
+
 # <---------- set environmental parameters --------->
 
 # TODO:增加自定义模型的max_token,并且记得增加对其他自定义参数的适配
@@ -184,25 +194,40 @@ with gr.Blocks(title="GPT-Gradio-Agent",
                                         label=i18n("Model"),
                                         info=i18n("Model info"),
                                         interactive=True)
-                def get_chat_model_select(evt: gr.SelectData):
-                    if evt.value == 'OpenAI':
-                        return gr.Dropdown(choices=openai_chat_model,
-                                           value=openai_chat_model[0])
-                    elif evt.value == 'Ollama':
-                        return gr.Dropdown(choices=ollama_chat_model,
-                                           value=ollama_chat_model[0])
-                chat_model_type.select(get_chat_model_select,outputs=[model_choice])
             with gr.Tab(label=i18n("ChatInterface")):
                 with gr.Group():
                     with gr.Row():
                         chat_name = gr.Textbox(label=i18n("Chatbot name"),
                                                interactive=True,
                                                value=get_last_conversation_name(),
-                                               info=i18n("Chatbot info"))
+                                               info=i18n("Chatbot info"),
+                                               scale=2)
                         if_agent_mode = gr.Checkbox(label=i18n("Agent Mode"),
                                                     value=False,
-                                                    info=i18n("If you want llm to be an Agent, and use efficient tools to help you, enable this option.")
+                                                    info=i18n("If you want llm to be an Agent, and use efficient tools to help you, enable this option."),
+                                                    visible=False,
+                                                    scale=1
                         )
+                        def get_chat_model_select(evt: gr.SelectData):
+                            if evt.value == 'OpenAI':
+                                return gr.Dropdown(choices=openai_chat_model,
+                                                   value=openai_chat_model[0]
+                                    ),gr.Checkbox(visible=True)
+                            elif evt.value == 'Ollama':
+                                return gr.Dropdown(choices=ollama_chat_model,
+                                                   value=ollama_chat_model[0]
+                                    ),gr.Checkbox(value=False,visible=False)
+                        chat_model_type.select(get_chat_model_select,outputs=[model_choice,if_agent_mode])
+                    agent_tools_list = gr.CheckboxGroup(choices=tools,
+                                                        label=i18n("Usable Agent Tools"),
+                                                        visible=False,
+                                                        interactive=True)
+                    def get_agent_mode_select(evt: gr.SelectData):
+                            if evt.selected:
+                                return gr.CheckboxGroup(visible=True)
+                            else:
+                                return gr.CheckboxGroup(visible=False)
+                    if_agent_mode.select(get_agent_mode_select,outputs=agent_tools_list)
                     chat_bot = gr.Chatbot(height=600,
                                         value=get_last_conversation_content(),
                                         show_label=False,

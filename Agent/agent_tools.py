@@ -5,8 +5,8 @@ from langchain_core.tools import tool
 @tool
 def web_crewler(url: str) -> str:
     """Useful for data extraction. Input should be a URL string."""
-    from langchain_community.document_loaders import AsyncChromiumLoader,AsyncHtmlLoader 
-    from langchain_community.document_transformers import Html2TextTransformer,BeautifulSoupTransformer  
+    from langchain_community.document_loaders.async_html import AsyncHtmlLoader 
+    from langchain_community.document_transformers.html2text import Html2TextTransformer
 
     # Load HTML  
     # loader = AsyncChromiumLoader(url)  
