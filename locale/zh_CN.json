@@ -107,5 +107,7 @@
     "Save All of Chat Configs":"保存所有聊天配置",
     "Hybrid search achieves complementarity between multiple search techniques by combining multiple search systems.":"混合检索通过多个检索系统的组合，实现了多个检索技术之间的互补。",
     "Hybrid Retrieve Weight":"混合检索权重",
-    "Using BM25 as the sparse retriever, the higher the value, the more inclined the sparse retriever results.":"使用 BM25 作为稀疏检索器，值越大，检索结果越倾向于稀疏检索器。"
+    "Using BM25 as the sparse retriever, the higher the value, the more inclined the sparse retriever results.":"使用 BM25 作为稀疏检索器，值越大，检索结果越倾向于稀疏检索器。",
+    "Usable Agent Tools":"Agent 可用工具",
+    "If you want llm to be an Agent, and use efficient tools to help you, enable this option.":"如果您想让 llm 成为 Agent ，并使用高效工具来帮助您，请启用此选项。"
 }

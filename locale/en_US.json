@@ -103,5 +103,7 @@
     "Save All of Chat Configs": "Save All of Chat Configs",
     "Hybrid search achieves complementarity between multiple search techniques by combining multiple search systems.":"Hybrid search achieves complementarity between multiple search techniques by combining multiple search systems.",
     "Hybrid Retrieve Weight": "Hybrid Retrieve Weight",
-    "Using BM25 as the sparse retriever, the higher the value, the more inclined the sparse retriever results.":"Using BM25 as the sparse retriever, the higher the value, the more inclined the sparse retriever results."
+    "Using BM25 as the sparse retriever, the higher the value, the more inclined the sparse retriever results.":"Using BM25 as the sparse retriever, the higher the value, the more inclined the sparse retriever results.",
+    "Usable Agent Tools": "Usable Agent Tools",
+    "If you want llm to be an Agent, and use efficient tools to help you, enable this option.":"If you want llm to be an Agent, and use efficient tools to help you, enable this option."
 }

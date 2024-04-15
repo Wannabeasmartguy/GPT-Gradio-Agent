@@ -1,15 +1,16 @@
 from langchain.chains.summarize import load_summarize_chain
 from langchain_community.vectorstores import chroma
-from langchain_community.chat_models import ChatOllama
+from langchain_community.chat_models.ollama import ChatOllama
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
-from langchain_openai.chat_models import AzureChatOpenAI
-from langchain.chains import RetrievalQA,ConversationalRetrievalChain
+from langchain_openai.chat_models.azure import AzureChatOpenAI
+from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain_community.embeddings.sentence_transformer import (
     SentenceTransformerEmbeddings,
 )
-from langchain_community.document_loaders import TextLoader,UnstructuredFileLoader
-from langchain_community.retrievers import BM25Retriever
+from langchain_community.document_loaders.unstructured import UnstructuredFileLoader
+from langchain_community.document_loaders.text import TextLoader
+from langchain_community.retrievers.bm25 import BM25Retriever
 from langchain.text_splitter import CharacterTextSplitter,RecursiveCharacterTextSplitter
 from langchain.storage import InMemoryStore
 from langchain.retrievers import ContextualCompressionRetriever,ParentDocumentRetriever,EnsembleRetriever
@@ -17,17 +18,21 @@ from langchain.retrievers import ContextualCompressionRetriever,ParentDocumentRe
 from huggingface_hub import snapshot_download
 from typing import Literal
 from openai import BadRequestError
-import chromadb
 from openai import AzureOpenAI
+import chromadb
 import gradio as gr
 import pandas as pd
 import tiktoken
 import gradio as gr
 import json
+import importlib
+
 from gga_utils.common import *
 from gga_utils.vec_utils import *
 from local_llm.ollama import *
 from vecstore.reranker import *
+from Agent.agent import * 
+from Agent.agent_tools import *
 # from reranker import *
 import functools
 import os
@@ -172,14 +177,14 @@ def reload_memory(chat_bot:list[list],
     # Before initiate memory, clear it to make function have wider applicability
     chat_memory.clear()
 
-    # if chat_bot is not null, and its length < context_length in setting, send it all to memery
+    # if chat_bot is not None, and its length < context_length in setting, send it all to memery
     if (chat_bot != None or chat_bot!=[]) and len(chat_bot)<=context_length:
         for round in chat_bot:
             message = round[0]
             reply = round[1]
             chat_memory.save_context({"input": message},{"output": reply})
 
-    # if chat_bot is not null, and its length > context_length in setting, send its latest rounds to memery
+    # if chat_bot is not None, and its length > context_length in setting, send its latest rounds to memery
     elif (chat_bot != None or chat_bot!=[]) and len(chat_bot)>context_length:
         for round in chat_bot[-context_length:]:
             message = round[0]
@@ -187,7 +192,7 @@ def reload_memory(chat_bot:list[list],
             chat_memory.save_context({"input": message},{"output": reply})
 
     else:
-        # if chat_bot is null, that means this chatbot is a new chat or is cleared
+        # if chat_bot is None, that means this chatbot is a new chat or is cleared
         # nothing needs to be done
         pass
 
@@ -203,6 +208,7 @@ def deliver(message:str,
             top_p:float,
             frequency_penalty:float,
             presence_penalty:float,
+            if_agent_mode:bool,
             #chat_memory:ConversationBufferMemory
             ):
     '''
@@ -212,96 +218,132 @@ def deliver(message:str,
 
     global chat_memory
 
-    # Load memory first
-    memory_tmp = chat_memory.load_memory_variables({})["chat_memory"]
-    
-    # Convert to request format
-    chat_history = convert_messages(memory_tmp)
-    # chat_history.clear()
-    # chat_history.extend(convert_messages(memory_tmp))
+    if if_agent_mode:
+        llm = create_llm(model_type=chat_model_type,
+                         model_choice=model_choice)
+        if isinstance(llm,AzureChatOpenAI):
+            '''不再传入memory，而是直接使用内置chat_memory'''
+            openai_agent = OpenAIChatAgent(llm=llm)
+            # 将作为chat_history_list传入的chatbox读取为chat_history
+            if chat_history_list != [] and chat_history_list != None:
+                # 将chat_history_list加载进Agent的Memory
+                for round in chat_history_list:
+                    question = round[0]
+                    answer = round[1]
+                    openai_agent.chat_memory.save_context({"input": question},{"output": answer})
+            
+            reply = openai_agent.invoke({"input":message})
 
-    # Avoid empty input
-    if message == "":
-        raise gr.Error("Please input a message")
+            # 构建一个只添加了human message的chat_history_list，用于显示在页面上
+            chat_history_list.append([message,None])
 
-    # System Prompt and User Prompt
-    if system:
-        system_input = {
-            "role": "system",
-            "content": system
-        }
-        if chat_history == []:
-            chat_history.append(system_input)
+            # 构建一个完整的chat_history，用于后面的伪流式输出
+            openai_agent.chat_memory.save_context({"input": message},{"output": reply})
+            chat_history = convert_messages(openai_agent.chat_memory.load_memory_variables({})["chat_memory"])
+            
+            # 为了避免重复记忆，需要清空Agent的Memory
+            openai_agent.chat_memory.clear()
+            return chat_history_list,message,chat_history
+
         else:
-            if chat_history == None:
-                chat_history = []
+            common_agent = CommonAgent(llm=llm)
+            reply = common_agent.invoke({"input":message})
+        
+            # chat_history = chat_history_list.copy().append([message,reply])
+            chat_history_list.append([message,None])
+            return chat_history_list,message,None
+
+    else:
+        # Load memory first
+        memory_tmp = chat_memory.load_memory_variables({})["chat_memory"]
+        
+        # Convert to request format
+        chat_history = convert_messages(memory_tmp)
+        # chat_history.clear()
+        # chat_history.extend(convert_messages(memory_tmp))
+
+        # Avoid empty input
+        if message == "":
+            raise gr.Error("Please input a message")
+
+        # System Prompt and User Prompt
+        if system:
+            system_input = {
+                "role": "system",
+                "content": system
+            }
+            if chat_history == []:
                 chat_history.append(system_input)
             else:
-                chat_history.insert(0,system_input)
- 
-    user_input = {
-        "role": "user",
-        "content": message
-    }
-
-    chat_history.append(user_input)
-
-    # Trim the context length first
-    if (len(chat_history)-1 > context_length) and len(chat_history)>3:
-        chat_history = [chat_history[0]]+chat_history[-context_length:]
-
-    if chat_model_type == "OpenAI":
-        if context_length == 0:
-            # If context_length == 0,clean up chat_history
-            try:
-                response = client.chat.completions.create(
-                    model=model_choice,
-                    messages=[system_input,user_input],
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    top_p=top_p,
-                    frequency_penalty=frequency_penalty,
-                    presence_penalty=presence_penalty,
-            )
-            except BadRequestError:
-                raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
-        else:
-            try:
-                response = client.chat.completions.create(
-                    model=model_choice,
-                    messages=chat_history,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    top_p=top_p,
-                    frequency_penalty=frequency_penalty,
-                    presence_penalty=presence_penalty,
-                )
-            except BadRequestError:
-                raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
-        reply = response.choices[0].message.content
-
-    elif chat_model_type == "Ollama":
-        if context_length == 0:
-            try:
-                response = send_ollama_chat_request(messages=[system_input,user_input],
-                                             model=model_choice)
-            except BadRequestError:
-                raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
-        else:
-            try:
-                response = send_ollama_chat_request(messages=chat_history,
-                                             model=model_choice)
-            except BadRequestError:
-                raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
-        reply = response["message"]["content"]
-
-    chat_history_list.append([message,None])
-    chat_memory.save_context({"input": message},{"output": reply})
-
-    memory_tmp = chat_memory.load_memory_variables({})["chat_memory"]
-    chat_history = convert_messages(memory_tmp)
+                if chat_history == None:
+                    chat_history = []
+                    chat_history.append(system_input)
+                else:
+                    chat_history.insert(0,system_input)
     
-    return chat_history_list,message,chat_history
+        user_input = {
+            "role": "user",
+            "content": message
+        }
+
+        chat_history.append(user_input)
+
+        # Trim the context length first
+        if (len(chat_history)-1 > context_length) and len(chat_history)>3:
+            chat_history = [chat_history[0]]+chat_history[-context_length:]
+
+        if chat_model_type == "OpenAI":
+            if context_length == 0:
+                # If context_length == 0,clean up chat_history
+                try:
+                    response = client.chat.completions.create(
+                        model=model_choice,
+                        messages=[system_input,user_input],
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        top_p=top_p,
+                        frequency_penalty=frequency_penalty,
+                        presence_penalty=presence_penalty,
+                )
+                except BadRequestError:
+                    raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
+            else:
+                try:
+                    response = client.chat.completions.create(
+                        model=model_choice,
+                        messages=chat_history,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        top_p=top_p,
+                        frequency_penalty=frequency_penalty,
+                        presence_penalty=presence_penalty,
+                    )
+                except BadRequestError:
+                    raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
+            reply = response.choices[0].message.content
+
+        elif chat_model_type == "Ollama":
+            if context_length == 0:
+                try:
+                    response = send_ollama_chat_request(messages=[system_input,user_input],
+                                                model=model_choice)
+                except BadRequestError:
+                    raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
+            else:
+                try:
+                    response = send_ollama_chat_request(messages=chat_history,
+                                                model=model_choice)
+                except BadRequestError:
+                    raise gr.Error(i18n("Max_token has exceeded the maximum value, please shorten the text or reduce the max_token setting."))
+            reply = response["message"]["content"]
+
+        chat_history_list.append([message,None])
+        chat_memory.save_context({"input": message},{"output": reply})
+
+        memory_tmp = chat_memory.load_memory_variables({})["chat_memory"]
+        chat_history = convert_messages(memory_tmp)
+        
+        return chat_history_list,message,chat_history
 
 def remove_last_chat(chat_history:list,
                      chat_bot:list[list]):
