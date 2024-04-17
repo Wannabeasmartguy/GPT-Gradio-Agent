@@ -4,6 +4,7 @@ import time
 import os
 from dotenv import load_dotenv
 import pandas
+import importlib
 
 # Customized Modules
 from vecstore.vecstore import * 
@@ -15,19 +16,16 @@ from gga_utils.theme import *
 from vecstore.template import *
 from gga_utils.vec_utils import *
 from pic_gen.pic_gen import *
+from Agent.agent_tools import *
+from Agent.agent import *
 
 # import langchain to chat with file
-from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders.unstructured import UnstructuredFileLoader
 from langchain.chains import RetrievalQA
 
 load_dotenv()
 
-# openai.base_url = os.getenv('OPENAI_API_BASE')
-# openai.api_key = os.getenv('OPENAI_API_KEY')
-# openai.api_version = os.getenv('OPENAI_API_VERSION')
-# openai.api_type = os.getenv('OPENAI_API_TYPE')
 
 # initialize the embedding model setting 
 model_type_choice = ["OpenAI","Hugging Face(local)"]
@@ -49,6 +47,15 @@ set_theme = adjust_theme()
 i18n = I18nAuto()  
 # Initialize knowledge base
 kb = GRKnowledgeBase()
+
+# 获取所有 tools
+module = importlib.import_module('Agent.agent_tools')
+
+# 使用列表表达式将所有工具添加到 tools 列表中
+# 遍历模块的__dict__属性，并筛选出函数工具
+tools = [name for name, obj in module.__dict__.items() if callable(obj) and not name.startswith('__') and name != "tool"]
+
+
 # <---------- set environmental parameters --------->
 
 # TODO:增加自定义模型的max_token,并且记得增加对其他自定义参数的适配
@@ -65,7 +72,7 @@ def model_token_correct(model_choice:str):
     }
     return model_maxtoken_dic[model_choice]
 
-def stream(history_list:list,chat_history:list[dict]):
+def stream(history_list:list,chat_history:list[dict],if_agent_mode:bool=False):
     '''
     Used to make LLM output looks like stream(Not real stream output).
     '''
@@ -179,20 +186,40 @@ with gr.Blocks(title="GPT-Gradio-Agent",
                                         label=i18n("Model"),
                                         info=i18n("Model info"),
                                         interactive=True)
-                def get_chat_model_select(evt: gr.SelectData):
-                    if evt.value == 'OpenAI':
-                        return gr.Dropdown(choices=openai_chat_model,
-                                           value=openai_chat_model[0])
-                    elif evt.value == 'Ollama':
-                        return gr.Dropdown(choices=ollama_chat_model,
-                                           value=ollama_chat_model[0])
-                chat_model_type.select(get_chat_model_select,outputs=[model_choice])
             with gr.Tab(label=i18n("ChatInterface")):
                 with gr.Group():
-                    chat_name = gr.Textbox(label=i18n("Chatbot name"),
-                                            interactive=True,
-                                            value=get_last_conversation_name(),
-                                            info=i18n("Chatbot info"))
+                    with gr.Row():
+                        chat_name = gr.Textbox(label=i18n("Chatbot name"),
+                                               interactive=True,
+                                               value=get_last_conversation_name(),
+                                               info=i18n("Chatbot info"),
+                                               scale=2)
+                        if_agent_mode = gr.Checkbox(label=i18n("Agent Mode"),
+                                                    value=False,
+                                                    info=i18n("If you want llm to be an Agent, and use efficient tools to help you, enable this option."),
+                                                    visible=False,
+                                                    scale=1
+                        )
+                        def get_chat_model_select(evt: gr.SelectData):
+                            if evt.value == 'OpenAI':
+                                return gr.Dropdown(choices=openai_chat_model,
+                                                   value=openai_chat_model[0]
+                                    ),gr.Checkbox(visible=True)
+                            elif evt.value == 'Ollama':
+                                return gr.Dropdown(choices=ollama_chat_model,
+                                                   value=ollama_chat_model[0]
+                                    ),gr.Checkbox(value=False,visible=False)
+                        chat_model_type.select(get_chat_model_select,outputs=[model_choice,if_agent_mode])
+                    agent_tools_list = gr.CheckboxGroup(choices=tools,
+                                                        label=i18n("Usable Agent Tools"),
+                                                        visible=False,
+                                                        interactive=True)
+                    def get_agent_mode_select(evt: gr.SelectData):
+                            if evt.selected:
+                                return gr.CheckboxGroup(visible=True)
+                            else:
+                                return gr.CheckboxGroup(visible=False)
+                    if_agent_mode.select(get_agent_mode_select,outputs=agent_tools_list)
                     chat_bot = gr.Chatbot(height=600,
                                         value=get_last_conversation_content(),
                                         show_label=False,
@@ -483,7 +510,7 @@ with gr.Blocks(title="GPT-Gradio-Agent",
     # Merge all handles that require input and output.
     input_param = [message, chat_model_type,model_choice, chat_his, chat_bot, System_Prompt, 
                    Context_length, Temperature,max_tokens,top_p,frequency_penalty,
-                   presence_penalty]
+                   presence_penalty, if_agent_mode]
     output_param = [chat_bot, usr_msg, chat_his]
 
     # update model max_token
@@ -512,20 +539,27 @@ with gr.Blocks(title="GPT-Gradio-Agent",
     chatbot button event
     '''
 
-    message.submit(reload_memory,
-                   [chat_bot,Context_length],
-                   ).success(deliver,
-                             input_param, 
-                             output_param, 
-                             queue=False
-                             ).then(lambda: gr.Textbox(value=''), 
-                                     [],
-                                     [message]
-                                     ).success(stream,
-                                        [chat_bot,chat_his]
-                                        ,chat_bot
-                                        ).success(update_conversation_to_json,
-                                                [chat_name,chat_bot])
+    message.submit(
+        reload_memory,
+        [chat_bot,Context_length],
+    ).success(
+        deliver,
+        input_param, 
+        output_param, 
+        queue=False
+    ).then(
+        lambda: gr.Textbox(value=''), 
+        [],
+        [message]
+    ).success(
+        stream,
+        [chat_bot,chat_his,if_agent_mode]
+        ,chat_bot
+    ).success(
+        update_conversation_to_json,
+        [chat_name,chat_bot]
+    )
+    
     send.click(reload_memory,
                [chat_bot,Context_length],
                ).success(deliver,
@@ -534,7 +568,7 @@ with gr.Blocks(title="GPT-Gradio-Agent",
                          queue=False
                          ).then(lambda: gr.Textbox(value=''), [],[message]
                                 ).success(stream,
-                                         [chat_bot,chat_his],
+                                         [chat_bot,chat_his,if_agent_mode],
                                          chat_bot
                                          ).success(update_conversation_to_json,
                                                   [chat_name,chat_bot])
@@ -552,7 +586,7 @@ with gr.Blocks(title="GPT-Gradio-Agent",
                                                                  queue=False
                                                                  ).then(lambda: gr.Textbox(value=''), [],[message]
                                                                         ).success(stream,
-                                                                                [chat_bot,chat_his],
+                                                                                [chat_bot,chat_his,if_agent_mode],
                                                                                 chat_bot
                                                                                 ).success(lambda: gr.Button(interactive=True),[],[send]
                                                                                           ).success(lambda: gr.Button(interactive=True),[],[chat_with_file]
