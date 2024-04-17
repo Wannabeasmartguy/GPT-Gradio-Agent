@@ -19,7 +19,7 @@ from pic_gen.pic_gen import *
 # import langchain to chat with file
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.document_loaders import DirectoryLoader,PyPDFLoader,UnstructuredFileLoader
+from langchain_community.document_loaders.unstructured import UnstructuredFileLoader
 from langchain.chains import RetrievalQA
 
 load_dotenv()
@@ -89,17 +89,9 @@ def upload_file(file_obj,
     list of files are splitted.
     '''
     from pdf2image.exceptions import PDFInfoNotInstalledError
-    try:
-        # load your document
-        loader = UnstructuredFileLoader(file_obj.name)
-        document = loader.load()
-        progress(0.3, desc="Loading the file...")
-    except (FileNotFoundError,PDFInfoNotInstalledError):
-        raise gr.Error("File upload failed. This may be due to formatting issues (non-standard formats)")
+    
+    split_docs = choose_text_splitter(file_obj)
 
-    # initialize splitter
-    text_splitter = CharacterTextSplitter(chunk_size=600, chunk_overlap=0)
-    split_docs = text_splitter.split_documents(document)
     split_tmp.append(split_docs)
     progress(1, desc="Dealing...")
     gr.Info("Processing completed.")
@@ -353,6 +345,7 @@ with gr.Blocks(title="GPT-Gradio-Agent",
                                                     # ".jpeg", ".png",# images
                                                     ".csv", ".doc", ".docx", ".epub", ".odt", ".pdf", ".ppt", ".pptx", ".tsv", ".xlsx"# Documents
                                                     ],
+                                        file_count="multiple"
                                         # height=150
                                         )
                             summarize = gr.Button(value=i18n("Summarize file content"),visible=False)
@@ -587,9 +580,9 @@ with gr.Blocks(title="GPT-Gradio-Agent",
     chat_file button event
     '''
 
-    file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full").then(cal_token_cost,[split_tmp],[estimate_cost])
-    file.clear(lambda:gr.Textbox(value=''),[],[estimate_cost])
-    refresh_file_cost.click(lambda:gr.Text(),[],[estimate_cost]).then(lambda:gr.File(),[],[file]).then(lambda:gr.Text(),[],[estimate_cost])
+    file.upload(upload_file,inputs=[file,split_tmp],outputs=[split_tmp,file],show_progress="full")#.then(cal_token_cost,[split_tmp],[estimate_cost])
+    # file.clear(lambda:gr.Textbox(value=''),[],[estimate_cost])
+    # refresh_file_cost.click(lambda:gr.Text(),[],[estimate_cost]).then(lambda:gr.File(),[],[file]).then(lambda:gr.Text(),[],[estimate_cost])
     chat_with_file.click(ask_file,
                          inputs=[chat_bot,message,file_answer,chat_model_type,model_choice,sum_type,vector_path,
                                  file_list,filter_choice,if_rerank,if_hybrid_retrieve,hybrid_retrieve_weight],
@@ -667,7 +660,13 @@ with gr.Blocks(title="GPT-Gradio-Agent",
     )
     
     #file_list.change(refresh_file_list,inputs=[vector_content],outputs=file_list)
-    add_file.click(add_file_in_vectorstore,inputs=[vector_path,split_tmp,embedding_model_type,embedding_model,file],outputs=[vector_content,file_list]).then(load_vectorstore,inputs=[vector_path,embedding_model_type,embedding_model],outputs=[vector_content,file_list])
+    add_file.click(add_file_in_vectorstore,
+                   inputs=[vector_path,split_tmp,embedding_model_type,embedding_model,file],
+                   outputs=[vector_content,file_list,file]
+    ).then(load_vectorstore,
+           inputs=[vector_path,embedding_model_type,embedding_model],
+           outputs=[vector_content,file_list]
+    )
     delete_file.click(delete_flie_in_vectorstore,inputs=file_list).then(load_vectorstore,inputs=[vector_path,embedding_model_type,embedding_model],outputs=[vector_content,file_list])
 
     # Agent button event

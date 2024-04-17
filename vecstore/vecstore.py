@@ -1,21 +1,26 @@
 from langchain.chains.summarize import load_summarize_chain
 from langchain_community.vectorstores import chroma
-from langchain_community.chat_models import ChatOllama
+from langchain_community.chat_models.ollama import ChatOllama
 from langchain_openai.embeddings import AzureOpenAIEmbeddings
 from langchain_openai.chat_models import AzureChatOpenAI
-from langchain.chains import RetrievalQA,ConversationalRetrievalChain
+from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
+from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain.memory import ConversationBufferMemory
 from langchain_community.embeddings.sentence_transformer import (
     SentenceTransformerEmbeddings,
 )
-from langchain_community.document_loaders import TextLoader,UnstructuredFileLoader
-from langchain_community.retrievers import BM25Retriever
+from langchain_community.document_loaders.text import TextLoader
+from langchain_community.document_loaders.unstructured import UnstructuredFileLoader
+from langchain_community.document_loaders.markdown import UnstructuredMarkdownLoader
+from langchain_community.retrievers.bm25 import BM25Retriever
+from langchain_text_splitters.markdown import MarkdownTextSplitter
 from langchain.text_splitter import CharacterTextSplitter,RecursiveCharacterTextSplitter
 from langchain.storage import InMemoryStore
 from langchain.retrievers import ContextualCompressionRetriever,ParentDocumentRetriever,EnsembleRetriever
 
 from huggingface_hub import snapshot_download
-from typing import Literal
+from typing import Literal,Union
+from pathlib import Path
 from openai import BadRequestError
 import chromadb
 from openai import AzureOpenAI
@@ -33,6 +38,7 @@ import functools
 import os
 from dotenv import load_dotenv
 load_dotenv()
+
 
 model_type_choice = ["OpenAI","Hugging Face(local)"]
 openai_embedding_model = ["text-embedding-ada-002"]
@@ -123,7 +129,7 @@ def vectorstore_init_create(persist_vec_path,
 def get_chroma_info(persist_path:str,
                     file_name:str,
                     advance_info:bool,
-                    limit:int=100):
+                    limit:int=10000000000):
     try:
         client = chromadb.PersistentClient(path=persist_path)
         collection_lang = client.get_collection("langchain")
@@ -431,6 +437,8 @@ def add_file_in_vectorstore(persist_vec_path:str,
     '''
     Add file to vectorstore.
     '''
+    # 适配早期代码的问题
+    split_docs_real = split_docs[-1]
 
     if file_obj == None:
         raise gr.Error("You haven't chosen a file yet.")
@@ -446,11 +454,6 @@ def add_file_in_vectorstore(persist_vec_path:str,
     # Before we add file, we should detect if there is a file with the same name
     import os
     
-    # New file's name
-    file_absolute_path = file_obj.name
-    print(file_absolute_path)
-    file_name = os.path.basename(file_absolute_path)
-    
     vct_store = vectorstore.get()
     unique_sources = set(vct_store['metadatas'][i]['source'] for i in range(len(vct_store['metadatas'])))
     progress(0.6, desc="Updating knowledge base...")
@@ -458,14 +461,35 @@ def add_file_in_vectorstore(persist_vec_path:str,
     # List of names of files in kownledge base
     vec_file_names = [source.split('/')[-1].split('\\')[-1] for source in unique_sources]
 
-    # Compare file_name with vec_file_names
-    if file_name in vec_file_names: 
-        raise gr.Error('File already exists in vectorstore.')
+    if isinstance(file_obj, list):
+        # If file_obj is a list, it means that the user has uploaded multiple files.
+        
+        # # Duplicate detection
+        # for file in file_obj:
+        #     file_name = file.name.split('/')[-1].split('\\')[-1]
+        #     if file_name in vec_file_names:
+        #         gr.Info(f'File {file_name} already exists in vectorstore.')
+        #         # 如果重复，则将这部分文件从列表中删除
+        #         file_obj.remove(file)
+
+        # Add all files to vectorstore
+        file_obj_name = [file.name for file in file_obj]
+        split_docs_filtered = [doc for doc in split_docs_real if doc.metadata['source'] in file_obj_name]
+        vectorstore.add_documents(documents=split_docs_filtered)
+        progress(1, desc="Adding the files to the knowledge base...")
+    else:
+        # New file's name
+        file_absolute_path = file_obj.name
+        print(file_absolute_path)
+        file_name = os.path.basename(file_absolute_path)
+        # Compare file_name with vec_file_names
+        if file_name in vec_file_names: 
+            raise gr.Error('File already exists in vectorstore.')
     
-    # If file is already exist, it won't be added repeatedly
-    vectorstore.add_documents(documents=split_docs[-1])
-    progress(1, desc="Adding the file to the knowledge base...")
-    return gr.DataFrame(),gr.Dropdown()
+        # If file is already exist, it won't be added repeatedly
+        vectorstore.add_documents(documents=split_docs_real)
+        progress(1, desc="Adding the file to the knowledge base...")
+    return gr.DataFrame(),gr.Dropdown(),gr.File(value=None)
 
 def ParentDocumentRetrieve_workflow(raw_file:list,
                                     persist_vec_path:str,
@@ -1003,3 +1027,66 @@ def get_accordion(res, # 获得的 LLM 响应
         content = i.page_content
         refer_result += f"""<details><summary><font size="{font_size}">{title}</font></summary><font size="{font_size}">{content}</font></details>"""
     return refer_result
+
+
+def choose_text_splitter(file_path,
+                         chunk_size:int=1000,
+                         chunk_overlap:int=0):
+    '''
+    根据文件类型选择不同的文本分割器
+    
+    Args:
+        file_path: 文件对象，单个临时文件或一个文件地址列表；
+        chunk_size: 每个分块的大小，默认为1000；
+        chunk_overlap: 每个分块的重叠部分，默认为0。
+    '''
+
+    #如果 file_path 是一个list
+    if isinstance(file_path,list):
+        file_path_list = [i.name for i in file_path]
+        splitted_docs = []
+
+        for file_path in file_path_list:
+            # 根据扩展名判断文件类型
+            file_ext = os.path.splitext(file_path)[1]
+            if file_ext == '.pdf':
+                loader = UnstructuredFileLoader(file_path)
+                document = loader.load()
+                text_splitter = CharacterTextSplitter(chunk_size=chunk_size,chunk_overlap=chunk_overlap)
+                split_docs = text_splitter.split_documents(document)
+                splitted_docs.extend(split_docs)
+            elif file_ext =='.md':
+                loader = UnstructuredMarkdownLoader(file_path)
+                document = loader.load()
+                text_splitter = MarkdownTextSplitter(chunk_size=chunk_size,chunk_overlap=chunk_overlap)
+                split_docs = text_splitter.split_documents(document)
+                splitted_docs.extend(split_docs)
+            else:
+                loader = UnstructuredFileLoader(file_path)
+                document = loader.load()
+                text_splitter = CharacterTextSplitter(chunk_size=chunk_size,chunk_overlap=chunk_overlap)
+                split_docs = text_splitter.split_documents(document)
+                splitted_docs.extend(split_docs)
+        
+        return splitted_docs
+
+    # 如果 file_path 是一个obj
+    else:
+        file_ext = os.path.splitext(file_path.name)[1]
+        if file_ext == '.pdf':
+                loader = UnstructuredFileLoader(file_path.name)
+                document = loader.load()
+                text_splitter = CharacterTextSplitter(chunk_size=chunk_size,chunk_overlap=chunk_overlap)
+                split_docs = text_splitter.split_documents(document)
+        elif file_ext =='.md':
+            loader = UnstructuredMarkdownLoader(file_path.name)
+            document = loader.load()
+            text_splitter = MarkdownTextSplitter(chunk_size=chunk_size,chunk_overlap=chunk_overlap)
+            split_docs = text_splitter.split_documents(document)
+        else:
+            loader = UnstructuredFileLoader(file_path.name)
+            document = loader.load()
+            text_splitter = CharacterTextSplitter(chunk_size=chunk_size,chunk_overlap=chunk_overlap)
+            split_docs = text_splitter.split_documents(document)
+
+        return split_docs
