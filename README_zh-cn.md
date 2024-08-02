@@ -2,6 +2,8 @@
 
 使用 Azure OpenAI API（或 OpenAI API）和 Gradio 构建自己的 GPT 助手并管理 GPT 驱动的知识库！
 
+> 现在，我正在构建一个更方便用户使用的项目，名为["RAGENT"](https://github.com/Wannabeasmartguy/RAGENT) 及其插件["RAGENT-Copilot"](https://github.com/Wannabeasmartguy/RAGENT-Copilot)，它不仅实现了项目的主要功能，还能实际创建和调用代理。如果您希望获得更好的使用体验，请查看这两个软件仓库。
+
 ## 特点
 
 - [x] 🤖 简洁易用的聊天框界面
