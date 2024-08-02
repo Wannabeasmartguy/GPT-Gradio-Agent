@@ -4,6 +4,8 @@
 
 Build your own GPT Agent and manage your GPT-driven knowledge base with Azure OpenAI API (or OpenAI API) and Gradio! 
 
+> Now I'm building a more user-friendly project called ["RAGENT"](https://github.com/Wannabeasmartguy/RAGENT) and its plugin ["RAGENT-Copilot"](https://github.com/Wannabeasmartguy/RAGENT-Copilot), which not only implements the main features of the project, but also actually creates and calls Agents. If you want a better experience using, please check the repos.
+
 ## Features
 
 - [x] 🤖 Chatbox Interface
