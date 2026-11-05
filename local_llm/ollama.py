@@ -81,7 +81,7 @@ def get_ollama_model_list(url:str = 'http://localhost:11434/api/tags'):
     Args:
         url: Ollama 的API地址，默认为 http://localhost:11434/api/tags
     """
-    response = requests.get(url)
+    response = requests.get(url, timeout=30)
     tags = response.json()
 
     # 获取所有模型的名称
